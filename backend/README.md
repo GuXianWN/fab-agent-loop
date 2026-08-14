@@ -4,7 +4,7 @@ NestJS backend for the recovery assistant.
 
 ## AI chat
 
-`POST /api/ai/chat` accepts Vercel AI SDK UI messages and streams a UI-message response.
+`POST /api/ai/chat` accepts Vercel AI SDK UI messages and streams the selected model's response as UI-message events.
 Set `OPENAI_API_KEY` before starting the server; `OPENAI_BASE_URL` supports OpenAI-compatible providers and `OPENAI_MODEL` selects the model.
 
-The current recovery tools are deliberately read-only mock adapters. They demonstrate the intended audited flow and cannot issue production commands.
+The endpoint intentionally has no domain prompt or tools yet. It exists solely to validate the model provider and Vercel AI SDK streaming integration.
