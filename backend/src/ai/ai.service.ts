@@ -1,27 +1,36 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { createOpenAI } from '@ai-sdk/openai';
-import { convertToModelMessages, streamText, type UIMessage } from 'ai';
+import {
+  convertToModelMessages,
+  pipeUIMessageStreamToResponse,
+  streamText,
+  toUIMessageStream,
+  type UIMessage,
+} from 'ai';
 import type { Response } from 'express';
+import { AiConfig } from './ai.config';
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
+
+  constructor(private readonly config: AiConfig) {}
+
   async streamChat(messages: UIMessage[], response: Response): Promise<void> {
-    const apiKey = process.env.OPENAI_API_KEY ?? process.env.AI_API_KEY;
-
-    if (!apiKey) {
-      throw new ServiceUnavailableException('OPENAI_API_KEY is not configured');
-    }
-
     const openai = createOpenAI({
-      apiKey,
-      baseURL: process.env.OPENAI_BASE_URL,
+      apiKey: this.config.apiKey,
+      baseURL: this.config.baseURL,
     });
 
     const result = streamText({
-      model: openai(process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'),
+      model: openai(this.config.model),
       messages: await convertToModelMessages(messages),
+      onError: ({ error }) => this.logger.error(error),
     });
 
-    await result.pipeUIMessageStreamToResponse(response);
+    await pipeUIMessageStreamToResponse({
+      response,
+      stream: toUIMessageStream({ stream: result.stream }),
+    });
   }
 }
