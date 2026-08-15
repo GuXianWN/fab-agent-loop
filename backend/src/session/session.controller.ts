@@ -1,4 +1,5 @@
 import { Controller, Get, Post } from '@nestjs/common';
+import { R } from '../common/r';
 import { SessionService } from './session.service';
 
 @Controller('session')
@@ -7,16 +8,16 @@ export class SessionController {
 
   @Get()
   get() {
-    return this.sessionService.get();
+    return R.success().data(this.sessionService.get());
   }
 
   @Post('login')
   login() {
-    return this.sessionService.login();
+    return R.success().data(this.sessionService.login());
   }
 
   @Post('logout')
   logout() {
-    return this.sessionService.logout();
+    return R.success().data(this.sessionService.logout());
   }
 }

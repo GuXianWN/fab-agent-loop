@@ -1,8 +1,7 @@
 import { Column, Entity, Index } from 'typeorm';
+import type { ChatVisibility } from '../../../../shared/types';
 import { AuditedEntity } from './audited.entity';
 import { DATABASE_SCHEMA, DATABASE_TABLE_PREFIX } from '../database.constants';
-
-export type ChatVisibility = 'private' | 'public';
 
 @Entity({ name: `${DATABASE_TABLE_PREFIX}chats`, schema: DATABASE_SCHEMA })
 @Index(['userId', 'updatedAt'])

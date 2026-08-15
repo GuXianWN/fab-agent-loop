@@ -3,26 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { UIMessage } from 'ai';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
+import type { Chat, ChatSummary, ChatVisibility, ChatVote, UpdateChatInput } from '../../../shared/types';
 import {
   ChatEntity,
   DEMO_USER_ID,
   MessageEntity,
   MessageVoteEntity,
-  type ChatVisibility,
 } from '../database/entities';
-
-export type { ChatVisibility } from '../database/entities';
-
-export interface ChatVote {
-  chatId: string;
-  messageId: string;
-  isUpvoted: boolean;
-}
-
-type ChatUpdate = {
-  title?: string | null;
-  visibility?: ChatVisibility;
-};
 
 @Injectable()
 export class ChatsService {
@@ -32,16 +19,16 @@ export class ChatsService {
     @InjectRepository(MessageVoteEntity) private readonly votes: Repository<MessageVoteEntity>,
   ) {}
 
-  async list() {
+  async list(): Promise<ChatSummary[]> {
     const chats = await this.chats.find({
       where: { userId: DEMO_USER_ID },
       order: { updatedAt: 'DESC' },
     });
 
-    return chats.map(({ id, title, createdAt }) => ({ id, title, createdAt }));
+    return chats.map(({ id, title, createdAt }) => ({ id, title, createdAt: createdAt.toISOString() }));
   }
 
-  async create(input?: string) {
+  async create(input?: string): Promise<Chat<UIMessage>> {
     const chat = this.chats.create({
       id: randomUUID(),
       userId: DEMO_USER_ID,
@@ -75,11 +62,11 @@ export class ChatsService {
     return this.toChat(chat);
   }
 
-  async get(id: string) {
+  async get(id: string): Promise<Chat<UIMessage>> {
     return this.toChat(await this.requireChat(id));
   }
 
-  async update(id: string, update: ChatUpdate) {
+  async update(id: string, update: UpdateChatInput): Promise<Chat<UIMessage>> {
     const chat = await this.requireChat(id);
 
     if (update.title !== undefined) chat.title = update.title;
@@ -253,12 +240,12 @@ export class ChatsService {
       .execute();
   }
 
-  private async toChat(chat: ChatEntity) {
+  private async toChat(chat: ChatEntity): Promise<Chat<UIMessage>> {
     return {
       id: chat.id,
       title: chat.title,
       visibility: chat.visibility,
-      createdAt: chat.createdAt,
+      createdAt: chat.createdAt.toISOString(),
       messages: await this.getMessages(chat.id),
     };
   }

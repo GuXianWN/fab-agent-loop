@@ -1,63 +1,56 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
-import { ChatsService, type ChatVisibility } from './chats.service';
-
-interface UpdateChatBody {
-  title?: string | null;
-  visibility?: ChatVisibility;
-}
-
-interface CreateChatBody {
-  input?: string;
-}
-
-interface VoteBody {
-  messageId: string;
-  isUpvoted?: boolean;
-}
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import type { CreateChatInput, SetChatVoteInput, UpdateChatInput } from '../../../shared/types';
+import { R } from '../common/r';
+import { ChatsService } from './chats.service';
 
 @Controller('chats')
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 
   @Get()
-  list() {
-    return this.chatsService.list();
+  async list() {
+    return R.success().data(await this.chatsService.list());
   }
 
   @Post()
-  create(@Body() body: CreateChatBody) {
-    return this.chatsService.create(body.input?.trim());
+  @HttpCode(200)
+  async create(@Body() body: CreateChatInput) {
+    return R.success().data(await this.chatsService.create(body.input?.trim()));
   }
 
   @Get(':id/votes')
-  listVotes(@Param('id') id: string) {
-    return this.chatsService.listVotes(id);
+  async listVotes(@Param('id') id: string) {
+    return R.success().data(await this.chatsService.listVotes(id));
   }
 
   @Post(':id/votes')
-  setVote(@Param('id') id: string, @Body() body: VoteBody) {
-    return this.chatsService.setVote(id, body.messageId, body.isUpvoted);
+  @HttpCode(200)
+  async setVote(@Param('id') id: string, @Body() body: SetChatVoteInput) {
+    return R.success().data(await this.chatsService.setVote(id, body.messageId, body.isUpvoted) ?? null);
   }
 
-  @Delete(':id/messages/:messageId')
-  @HttpCode(204)
-  removeMessage(@Param('id') id: string, @Param('messageId') messageId: string) {
-    return this.chatsService.removeMessage(id, messageId);
+  @Post(':id/messages/:messageId/delete')
+  @HttpCode(200)
+  async removeMessage(@Param('id') id: string, @Param('messageId') messageId: string) {
+    await this.chatsService.removeMessage(id, messageId);
+    return R.success().data(null);
   }
 
   @Get(':id')
-  get(@Param('id') id: string) {
-    return this.chatsService.get(id);
+  async get(@Param('id') id: string) {
+    return R.success().data(await this.chatsService.get(id));
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() body: UpdateChatBody) {
-    return this.chatsService.update(id, body);
+  @Post(':id/update')
+  @HttpCode(200)
+  async update(@Param('id') id: string, @Body() body: UpdateChatInput) {
+    return R.success().data(await this.chatsService.update(id, body));
   }
 
-  @Delete(':id')
-  @HttpCode(204)
-  remove(@Param('id') id: string) {
-    return this.chatsService.remove(id);
+  @Post(':id/delete')
+  @HttpCode(200)
+  async remove(@Param('id') id: string) {
+    await this.chatsService.remove(id);
+    return R.success().data(null);
   }
 }

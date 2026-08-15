@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import type { Session, User } from '../../../shared/types';
 import { DEMO_USER_ID } from '../database/entities';
 
-const user = {
+const user: User = {
   id: DEMO_USER_ID,
   name: 'Demo User',
   username: 'demo_user',
@@ -12,7 +13,7 @@ const user = {
 export class SessionService {
   private loggedIn = false;
 
-  get() {
+  get(): Session {
     return { user: this.loggedIn ? user : null };
   }
 

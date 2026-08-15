@@ -1,23 +1,9 @@
 import type { UIMessage } from 'ai';
+import type { Chat as SharedChat, ChatSummary } from '#shared';
 
-export type ChatVisibility = 'private' | 'public';
+export type { ChatSummary, ChatVisibility, ChatVote } from '#shared';
 
-export interface ChatSummary {
-  id: string;
-  title: string | null;
-  createdAt: string;
-}
-
-export interface Chat extends ChatSummary {
-  visibility: ChatVisibility;
-  messages: UIMessage[];
-}
-
-export interface ChatVote {
-  chatId: string;
-  messageId: string;
-  isUpvoted: boolean;
-}
+export type Chat = SharedChat<UIMessage>;
 
 export interface ChatNavigationItem extends ChatSummary {
   label: string;

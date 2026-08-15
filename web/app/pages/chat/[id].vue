@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/vue';
+import type { ChatStreamRequest } from '#shared';
 import type { Chat, ChatVote, ChatVisibility } from '~/types/chat';
 
 const route = useRoute();
@@ -21,7 +22,7 @@ const { messages, status, error, sendMessage, regenerate, stop } = useChat(() =>
   generateId: () => crypto.randomUUID(),
   transport: new DefaultChatTransport({
     api: api.chatStreamUrl,
-    prepareSendMessagesRequest: ({ messages }) => ({ body: { chatId: chatId.value, messages } }),
+    prepareSendMessagesRequest: ({ messages }) => ({ body: { chatId: chatId.value, messages } satisfies ChatStreamRequest<UIMessage> }),
   }),
   onError(streamError) {
     toast.add({ description: streamError.message, icon: 'i-lucide-alert-circle', color: 'error', duration: 0 });
