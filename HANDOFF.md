@@ -10,7 +10,7 @@
 - 后端入口为 `backend/`，全局 API 前缀为 `/api`，允许全部跨域。
 - 当前实际模型由 `backend/.env` 的 `OPENAI_*` 配置决定；示例配置为 `https://api.deepseek.com` 与 `deepseek-v4-flash`。后端使用 `@ai-sdk/deepseek` 的 Chat Completions provider，并显式启用 `thinking`，从 `reasoning_content` 流式恢复可展示的 reasoning parts。前端仅展示同一个固定模型，不提供模型管理。
 - 会话数据已改为 PostgreSQL 存储；登录仍是进程内 `Demo User` Mock，固定用户 ID 为 `00000000-0000-4000-8000-000000000001`。
-- 根目录 `shared/types/` 现在存放共享 DTO、聊天、会话和泛型 `R<T>` 响应类型；其代码不依赖 Nuxt、Nest、TypeORM 或 AI SDK。前端以 `#shared` 类型别名引用，后端使用相对类型导入。
+- 根目录 `shared/` 是本地 Node 类型包 `@recovery-assistant/shared`，其中的 `.d.ts` 文件存放共享 DTO、聊天、会话和泛型 `R<T>` 响应类型；其代码不依赖 Nuxt、Nest、TypeORM 或 AI SDK。前后端均通过 `import type { ... } from '@recovery-assistant/shared'` 导入。
 
 ## 已实现功能
 
@@ -42,6 +42,7 @@ pnpm dev -- --port 5173
 - `cd web; pnpm typecheck`
 - `cd backend; pnpm run build`
 - 浏览器已验证：创建首条消息、DeepSeek reasoning 流、追问、刷新恢复、编辑、重新生成、投票、重命名、搜索、分享、删除、已删除会话 404、深浅色和移动端布局。
+- 2026-08-15 再次验证：`R<T>` 解包后的历史会话详情正常恢复，Login 可切换为 Demo User，前端控制台无错误。此前历史 404 与 Login 无响应由共享 `.ts` 类型文件改变 Nest 输出路径、以及浏览器缓存旧 API 响应共同造成；共享类型已改为本地 Node 纯类型包，普通 API 请求禁用浏览器缓存。
 
 未在本次交接中验证远程数据库迁移；停止生成与浏览器剪贴板读回受自动化时序/权限限制，部署前应在真实浏览器中再次覆盖这两项。
 

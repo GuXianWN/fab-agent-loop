@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
-import type { CreateChatInput, SetChatVoteInput, UpdateChatInput } from '../../../shared/types';
+import type { CreateChatInput, SetChatVoteInput, UpdateChatInput } from '@recovery-assistant/shared';
 import { R } from '../common/r';
 import { ChatsService } from './chats.service';
 

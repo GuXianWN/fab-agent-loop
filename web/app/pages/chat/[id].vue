@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/vue';
-import type { ChatStreamRequest } from '#shared';
+import type { ChatStreamRequest } from '@recovery-assistant/shared';
 import type { Chat, ChatVote, ChatVisibility } from '~/types/chat';
 
 const route = useRoute();

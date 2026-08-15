@@ -1,5 +1,5 @@
 import { Column, Entity, Index } from 'typeorm';
-import type { ChatVisibility } from '../../../../shared/types';
+import type { ChatVisibility } from '@recovery-assistant/shared';
 import { AuditedEntity } from './audited.entity';
 import { DATABASE_SCHEMA, DATABASE_TABLE_PREFIX } from '../database.constants';
 

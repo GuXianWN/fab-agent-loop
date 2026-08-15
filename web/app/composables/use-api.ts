@@ -6,15 +6,15 @@ import type {
   Session,
   SetChatVoteInput,
   UpdateChatInput,
-} from '#shared';
+} from '@recovery-assistant/shared';
 import type { UIMessage } from 'ai';
 
-type Chat = import('#shared').Chat<UIMessage>;
+type Chat = import('@recovery-assistant/shared').Chat<UIMessage>;
 
 export function useApi() {
   const { public: publicConfig } = useRuntimeConfig();
   const baseURL = publicConfig.apiBase.replace(/\/$/, '');
-  const request = $fetch.create({ baseURL });
+  const request = $fetch.create({ baseURL, cache: 'no-store' });
 
   async function requestData<T>(url: string, options?: Parameters<typeof request>[1]): Promise<T> {
     const response = await request<ApiResponse<T>>(url, { ...options, ignoreResponseError: true });

@@ -1,4 +1,4 @@
-import type { R as RPayload } from '../../../shared/types';
+import type { R as RPayload } from '@recovery-assistant/shared';
 
 export interface RSuccess {
   data<T>(data: T): R<T>;

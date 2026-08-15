@@ -1,1 +1,1 @@
-export type { Session, User } from '#shared';
+export type { Session, User } from '@recovery-assistant/shared';

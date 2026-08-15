@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Session, User } from '../../../shared/types';
+import type { Session, User } from '@recovery-assistant/shared';
 import { DEMO_USER_ID } from '../database/entities';
 
 const user: User = {

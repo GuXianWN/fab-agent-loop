@@ -18,9 +18,11 @@ import sql from '@shikijs/langs/sql';
 import swift from '@shikijs/langs/swift';
 import toml from '@shikijs/langs/toml';
 import xml from '@shikijs/langs/xml';
+import ChatCodeBlock from './ChatCodeBlock.vue';
 
 export default defineMarkdownComponent({
   name: 'ChatComark',
   plugins: [shiki({ languages: [html, css, python, sql, go, rust, java, c, cpp, ruby, php, swift, kotlin, diff, dockerfile, xml, toml, graphql] })],
+  components: { ProsePre: ChatCodeBlock },
   class: '*:first:mt-0 *:last:mb-0',
 });

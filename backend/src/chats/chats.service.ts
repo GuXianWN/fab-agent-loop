@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { UIMessage } from 'ai';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
-import type { Chat, ChatSummary, ChatVisibility, ChatVote, UpdateChatInput } from '../../../shared/types';
+import type { Chat, ChatSummary, ChatVisibility, ChatVote, UpdateChatInput } from '@recovery-assistant/shared';
 import {
   ChatEntity,
   DEMO_USER_ID,

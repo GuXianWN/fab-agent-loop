@@ -20,6 +20,9 @@ importers:
       '@nuxt/ui':
         specifier: ^4.10.0
         version: 4.10.0(3a36afd37136910f42a3f490b0e65afc)
+      '@recovery-assistant/shared':
+        specifier: file:../shared
+        version: file:../shared
       '@shikijs/langs':
         specifier: ^4.4.3
         version: 4.4.3
@@ -861,6 +864,9 @@ packages:
 
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
+
+  '@recovery-assistant/shared@file:../shared':
+    resolution: {directory: ../shared, type: directory}
 
   '@rolldown/binding-android-arm64@1.2.4':
     resolution: {integrity: sha512-jHC2cnyKz5xU2fhECtFl8OZ83cYNt13GZQD+0uMJ/X3o+ijmd56okHhTUwxVSHPx1IRVIJEZ1/1pPzeLCU6XKA==}
@@ -5675,6 +5681,8 @@ snapshots:
       supports-color: 10.2.2
 
   '@poppinss/exception@1.2.3': {}
+
+  '@recovery-assistant/shared@file:../shared': {}
 
   '@rolldown/binding-android-arm64@1.2.4':
     optional: true

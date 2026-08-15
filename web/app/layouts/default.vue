@@ -2,6 +2,7 @@
 import type { DropdownMenuItem } from '@nuxt/ui';
 
 const route = useRoute();
+const toast = useToast();
 const { groups, refresh } = useChats();
 const { loggedIn, refresh: refreshSession, login } = useSession();
 const { renameChat, deleteChat } = useChatActions();
@@ -38,6 +39,19 @@ function getChatActions(item: { id: string; title: string | null }): DropdownMen
     color: 'error',
     onSelect: () => deleteChat(item.id),
   }]];
+}
+
+async function handleLogin() {
+  try {
+    await login();
+  } catch (error) {
+    toast.add({
+      title: 'Login failed',
+      description: error instanceof Error ? error.message : 'Please try again.',
+      icon: 'i-lucide-alert-circle',
+      color: 'error',
+    });
+  }
 }
 </script>
 
@@ -87,7 +101,7 @@ function getChatActions(item: { id: string; title: string | null }): DropdownMen
 
       <template #footer="{ collapsed }">
         <UserMenu v-if="loggedIn" :collapsed="collapsed" />
-        <UButton v-else :label="collapsed ? '' : 'Login'" icon="i-lucide-log-in" color="neutral" variant="ghost" block @click="login" />
+        <UButton v-else :label="collapsed ? '' : 'Login'" icon="i-lucide-log-in" color="neutral" variant="ghost" block @click="handleLogin" />
       </template>
     </UDashboardSidebar>
 

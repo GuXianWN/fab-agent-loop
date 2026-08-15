@@ -1,7 +1,7 @@
 import type { UIMessage } from 'ai';
-import type { Chat as SharedChat, ChatSummary } from '#shared';
+import type { Chat as SharedChat, ChatSummary } from '@recovery-assistant/shared';
 
-export type { ChatSummary, ChatVisibility, ChatVote } from '#shared';
+export type { ChatSummary, ChatVisibility, ChatVote } from '@recovery-assistant/shared';
 
 export type Chat = SharedChat<UIMessage>;
 
