@@ -5,23 +5,30 @@
   "packageManager": "pnpm@10.30.1",
   "scripts": {
     "build": "nest build",
+    "migration:run": "pnpm run build && typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "pnpm run build && typeorm migration:revert -d dist/database/data-source.js",
     "start": "node dist/main",
     "start:dev": "nest start --watch"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.41",
+    "@ai-sdk/deepseek": "3.0.28",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/typeorm": "^11.0.3",
     "ai": "^7.0.65",
     "dotenv": "^17.4.2",
+    "lodash": "^4.18.1",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "typeorm": "^1.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
     "@types/express": "^5.0.6",
+    "@types/lodash": "^4.17.25",
     "@types/node": "^22.10.7",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",

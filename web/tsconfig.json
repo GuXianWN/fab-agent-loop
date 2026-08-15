@@ -1,14 +1,3 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ESNext", "DOM"],
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "jsx": "preserve",
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true
-  },
-  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+  "extends": "./.nuxt/tsconfig.json"
 }
