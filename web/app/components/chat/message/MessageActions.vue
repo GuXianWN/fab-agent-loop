@@ -2,9 +2,10 @@
 import { getTextFromMessage } from '@nuxt/ui/utils/ai';
 import { isFileUIPart, type UIMessage } from 'ai';
 import { useClipboard } from '@vueuse/core';
+import type { ChatMessage } from '~/types/chat';
 
 const props = defineProps<{
-  message: UIMessage & { createdAt?: string | Date };
+  message: ChatMessage & { createdAt?: string | Date };
   streaming: boolean;
   locked: boolean;
   editing: boolean;
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 const clipboard = useClipboard();
 const copied = ref(false);
 const hasFiles = computed(() => props.message.parts.some(isFileUIPart));
+const usage = computed(() => props.message.metadata?.usage);
 const formattedDate = computed(() => {
   if (!props.message.createdAt) return null;
 
@@ -40,6 +42,9 @@ function copy() {
 
 <template>
   <template v-if="message.role === 'assistant' && !streaming">
+    <UTooltip v-if="usage" :text="`Input ${usage.inputTokens.toLocaleString()} · Output ${usage.outputTokens.toLocaleString()} · Reasoning ${usage.reasoningTokens.toLocaleString()} · Total ${usage.totalTokens.toLocaleString()} tokens`">
+      <span class="mr-1 text-xs text-muted">{{ usage.totalTokens.toLocaleString() }} tokens</span>
+    </UTooltip>
     <UTooltip text="Copy response"><UButton size="sm" :color="copied ? 'primary' : 'neutral'" variant="ghost" :icon="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'" aria-label="Copy response" @click="copy" /></UTooltip>
     <UTooltip text="Good response"><UButton size="sm" :color="vote === true ? 'success' : 'neutral'" variant="ghost" icon="i-lucide-thumbs-up" aria-label="Good response" @click="emit('vote', message, true)" /></UTooltip>
     <UTooltip text="Bad response"><UButton size="sm" :color="vote === false ? 'error' : 'neutral'" variant="ghost" icon="i-lucide-thumbs-down" aria-label="Bad response" @click="emit('vote', message, false)" /></UTooltip>

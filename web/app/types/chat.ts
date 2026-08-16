@@ -1,9 +1,10 @@
 import type { UIMessage } from 'ai';
-import type { Chat as SharedChat, ChatSummary } from '@recovery-assistant/shared';
+import type { Chat as SharedChat, ChatMessageMetadata, ChatSummary } from '@recovery-assistant/shared';
 
-export type { ChatSummary, ChatVisibility, ChatVote } from '@recovery-assistant/shared';
+export type { ChatMessageMetadata, ChatSummary, ChatTokenUsage, ChatVote } from '@recovery-assistant/shared';
 
-export type Chat = SharedChat<UIMessage>;
+export type ChatMessage = UIMessage<ChatMessageMetadata>;
+export type Chat = SharedChat<ChatMessage>;
 
 export interface ChatNavigationItem extends ChatSummary {
   label: string;

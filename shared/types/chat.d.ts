@@ -1,4 +1,14 @@
-export type ChatVisibility = 'private' | 'public';
+export interface ChatTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  totalTokens: number;
+}
+
+export interface ChatMessageMetadata {
+  contextWindow: number;
+  usage: ChatTokenUsage;
+}
 
 export interface ChatSummary {
   id: string;
@@ -7,7 +17,6 @@ export interface ChatSummary {
 }
 
 export interface Chat<TMessage = unknown> extends ChatSummary {
-  visibility: ChatVisibility;
   messages: TMessage[];
 }
 
@@ -23,7 +32,6 @@ export interface CreateChatInput {
 
 export interface UpdateChatInput {
   title?: string | null;
-  visibility?: ChatVisibility;
 }
 
 export interface SetChatVoteInput {

@@ -1,5 +1,7 @@
 import type {
+  Chat,
   ChatSummary,
+  ChatMessageMetadata,
   ChatVote,
   CreateChatInput,
   R as ApiResponse,
@@ -9,7 +11,7 @@ import type {
 } from '@recovery-assistant/shared';
 import type { UIMessage } from 'ai';
 
-type Chat = import('@recovery-assistant/shared').Chat<UIMessage>;
+type ChatDetail = Chat<UIMessage<ChatMessageMetadata>>;
 
 export function useApi() {
   const { public: publicConfig } = useRuntimeConfig();
@@ -32,9 +34,9 @@ export function useApi() {
     login: () => requestData<Session>('/session/login', { method: 'POST' }),
     logout: () => requestData<Session>('/session/logout', { method: 'POST' }),
     listChats: () => requestData<ChatSummary[]>('/chats'),
-    createChat: (body: CreateChatInput) => requestData<Chat>('/chats', { method: 'POST', body }),
-    getChat: (id: string) => requestData<Chat>(`/chats/${id}`),
-    updateChat: (id: string, body: UpdateChatInput) => requestData<Chat>(`/chats/${id}/update`, { method: 'POST', body }),
+    createChat: (body: CreateChatInput) => requestData<ChatDetail>('/chats', { method: 'POST', body }),
+    getChat: (id: string) => requestData<ChatDetail>(`/chats/${id}`),
+    updateChat: (id: string, body: UpdateChatInput) => requestData<ChatDetail>(`/chats/${id}/update`, { method: 'POST', body }),
     removeChat: (id: string) => requestData<null>(`/chats/${id}/delete`, { method: 'POST' }),
     listVotes: (id: string) => requestData<ChatVote[]>(`/chats/${id}/votes`),
     setVote: (id: string, body: SetChatVoteInput) => requestData<ChatVote | null>(`/chats/${id}/votes`, { method: 'POST', body }),

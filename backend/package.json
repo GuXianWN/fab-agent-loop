@@ -18,13 +18,14 @@
     "@nestjs/typeorm": "^11.0.3",
     "@recovery-assistant/shared": "file:../shared",
     "ai": "^7.0.65",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
     "lodash": "^4.18.1",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^1.1.0",
-    "zod": "^4.4.3"
+    "typeorm": "^1.1.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",

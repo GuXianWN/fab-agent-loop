@@ -2,7 +2,7 @@ import { Column, Entity, Index } from 'typeorm';
 import { AuditedEntity } from './audited.entity';
 import { DATABASE_SCHEMA, DATABASE_TABLE_PREFIX } from '../database.constants';
 
-export const DEMO_USER_ID = '00000000-0000-4000-8000-000000000001';
+export const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 @Entity({ name: `${DATABASE_TABLE_PREFIX}users`, schema: DATABASE_SCHEMA })
 @Index(['username'], { unique: true })

@@ -1,8 +1,9 @@
 export type {
   Chat,
+  ChatMessageMetadata,
   ChatStreamRequest,
   ChatSummary,
-  ChatVisibility,
+  ChatTokenUsage,
   ChatVote,
   CreateChatInput,
   SetChatVoteInput,

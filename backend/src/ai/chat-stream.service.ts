@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createDeepSeek, type DeepSeekLanguageModelChatOptions } from '@ai-sdk/deepseek';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 import {
   convertToModelMessages,
   pipeUIMessageStreamToResponse,
@@ -9,20 +9,23 @@ import {
 } from 'ai';
 import { randomUUID } from 'node:crypto';
 import type { Response } from 'express';
+import type { ChatMessageMetadata } from '@recovery-assistant/shared';
 import { AiConfig } from './ai.config';
 import { ChatsService } from '../chats/chats.service';
 
 @Injectable()
-export class AiService {
-  private readonly logger = new Logger(AiService.name);
+export class ChatStreamService {
+  private readonly logger = new Logger(ChatStreamService.name);
 
   constructor(
     private readonly config: AiConfig,
     private readonly chatsService: ChatsService,
   ) {}
 
-  async streamChat(chatId: string, messages: UIMessage[], response: Response): Promise<void> {
+  async streamChat(chatId: string, messages: UIMessage<ChatMessageMetadata>[], response: Response): Promise<void> {
+    // 只持久化本次新增的最后一条用户消息。
     await this.chatsService.saveLatestUserMessage(chatId, messages);
+    // 模型上下文始终从数据库历史恢复，不直接信任客户端传来的完整消息列表。
     const persistedMessages = await this.chatsService.getMessages(chatId);
     const deepSeek = createDeepSeek({
       apiKey: this.config.apiKey,
@@ -31,22 +34,14 @@ export class AiService {
 
     const result = streamText({
       model: deepSeek(this.config.model),
+      // UIMessage 用于前端和 SSE，调用模型前转换为 ModelMessage。
       messages: await convertToModelMessages(persistedMessages),
       providerOptions: {
         deepseek: {
           thinking: { type: 'enabled' },
           reasoningEffort: 'high',
-        } satisfies DeepSeekLanguageModelChatOptions,
-      },
-      onError: ({ error }) => this.logger.error(error),
-      onChunk: ({ chunk }) => {
-        this.logger.debug(`AI stream chunk chatId=${chatId} ${JSON.stringify(chunk)}`);
-      },
-      onEnd: ({ finalStep, finishReason, usage }) => {
-        this.logger.log(
-          `AI stream completed chatId=${chatId} model=${this.config.model} finishReason=${finishReason} reasoningCharacters=${finalStep.reasoningText?.length ?? 0} reasoningTokens=${usage.outputTokenDetails.reasoningTokens ?? 0} textCharacters=${finalStep.text.length}`,
-        );
-      },
+        }
+      }
     });
 
     await pipeUIMessageStreamToResponse({
@@ -55,16 +50,25 @@ export class AiService {
         stream: result.stream,
         originalMessages: messages,
         generateMessageId: randomUUID,
+        messageMetadata: ({ part }) => {
+          if (part.type !== 'finish') return undefined;
+
+          return {
+            contextWindow: this.config.contextWindow,
+            usage: {
+              inputTokens: part.totalUsage.inputTokens ?? 0,
+              outputTokens: part.totalUsage.outputTokens ?? 0,
+              reasoningTokens: part.totalUsage.outputTokenDetails.reasoningTokens ?? 0,
+              totalTokens: part.totalUsage.totalTokens ?? 0,
+            },
+          } satisfies ChatMessageMetadata;
+        },
         onError: (error) => {
           this.logger.error(error);
           return 'An error occurred.';
         },
         onEnd: async ({ responseMessage, isAborted }) => {
-          const reasoningParts = responseMessage.parts.filter((part) => part.type === 'reasoning');
-          this.logger.log(
-            `AI UI message completed chatId=${chatId} aborted=${isAborted} parts=${responseMessage.parts.map((part) => part.type).join(',')} reasoningParts=${reasoningParts.length} reasoningCharacters=${reasoningParts.reduce((total, part) => total + part.text.length, 0)}`,
-          );
-
+          // 仅在流正常完成时持久化完整的助手消息。
           if (!isAborted && responseMessage.parts.length) {
             await this.chatsService.saveAssistantMessage(chatId, responseMessage);
           }

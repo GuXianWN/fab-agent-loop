@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { UIMessage } from 'ai';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
-import type { Chat, ChatSummary, ChatVisibility, ChatVote, UpdateChatInput } from '@recovery-assistant/shared';
+import type { Chat, ChatSummary, ChatVote, UpdateChatInput } from '@recovery-assistant/shared';
 import {
   ChatEntity,
   DEMO_USER_ID,
@@ -33,9 +33,6 @@ export class ChatsService {
       id: randomUUID(),
       userId: DEMO_USER_ID,
       title: null,
-      visibility: 'private',
-      model: 'deepseek-v4-flash',
-      shareId: randomUUID(),
       createdBy: DEMO_USER_ID,
       updatedBy: DEMO_USER_ID,
       deletedBy: null,
@@ -70,7 +67,6 @@ export class ChatsService {
     const chat = await this.requireChat(id);
 
     if (update.title !== undefined) chat.title = update.title;
-    if (update.visibility !== undefined) chat.visibility = update.visibility;
     chat.updatedBy = DEMO_USER_ID;
 
     return this.toChat(await this.chats.save(chat));
@@ -151,7 +147,7 @@ export class ChatsService {
     const message = messages.at(-1);
 
     if (!message || message.role !== 'user') return;
-    await this.saveMessage(chatId, message);
+    await this.saveMessage(chatId, { ...message, metadata: undefined });
   }
 
   async saveAssistantMessage(chatId: string, message: UIMessage): Promise<void> {
@@ -165,7 +161,7 @@ export class ChatsService {
       order: { sequence: 'ASC' },
     });
 
-    return messages.map(({ id, role, parts, metadata }) => ({ id, role, parts, metadata: metadata ?? undefined } as UIMessage));
+    return messages.map(({ id, role, parts, metadata }) => ({ id, role, parts, metadata: metadata ?? undefined }));
   }
 
   private async requireChat(id: string): Promise<ChatEntity> {
@@ -180,53 +176,62 @@ export class ChatsService {
     return message;
   }
 
-  private async saveMessage(chatId: string, message: UIMessage, touchChat = false): Promise<void> {
+  /**
+   * 保存一条 UI 消息。
+   * 同一 messageId 已存在时更新并恢复软删除记录；否则按 sequence 追加到会话末尾。
+   * 助手消息完成时会更新会话时间，确保会话列表按最新回复排序。
+   */
+  private async saveMessage(chatId: string, message: UIMessage, updateChatTimestamp = false): Promise<void> {
     await this.chats.manager.transaction(async (manager) => {
-      const chat = await manager
-        .getRepository(ChatEntity)
-        .createQueryBuilder('chat')
-        .setLock('pessimistic_write')
-        .where('chat.id = :id AND chat.user_id = :userId', { id: chatId, userId: DEMO_USER_ID })
-        .getOne();
+      const chatRepository = manager.getRepository(ChatEntity);
+      const chat = await chatRepository.findOne({ where: { id: chatId, userId: DEMO_USER_ID } });
 
       if (!chat) throw new NotFoundException('chat not found');
 
-      const messages = manager.getRepository(MessageEntity);
-      const existing = await messages.findOne({ where: { id: message.id }, withDeleted: true });
+      const messageRepository = manager.getRepository(MessageEntity);
+      const existingMessage = await messageRepository.findOne({
+        where: { id: message.id },
+        withDeleted: true,
+      });
 
-      if (existing) {
-        if (existing.chatId !== chatId) throw new NotFoundException('message not found');
-        existing.role = message.role;
-        existing.parts = message.parts;
-        existing.metadata = message.metadata ?? null;
-        existing.updatedBy = DEMO_USER_ID;
-        existing.deletedAt = null;
-        existing.deletedBy = null;
-        await messages.save(existing);
+      if (existingMessage) {
+        // 编辑或重试会复用 messageId，只允许更新当前会话中的消息。
+        if (existingMessage.chatId !== chatId) throw new NotFoundException('message not found');
+        if (existingMessage.role !== message.role) throw new NotFoundException('message not found');
+        await messageRepository.save(messageRepository.merge(existingMessage, {
+          role: message.role,
+          parts: message.parts,
+          metadata: message.metadata ?? null,
+          updatedBy: DEMO_USER_ID,
+          deletedAt: null,
+          deletedBy: null,
+        }));
       } else {
-        const result = await messages
-          .createQueryBuilder('message')
-          .withDeleted()
-          .select('COALESCE(MAX(message.sequence), -1)', 'sequence')
-          .where('message.chat_id = :chatId', { chatId })
-          .getRawOne<{ sequence: string }>();
+        // 新消息取当前最后一条消息的下一位，保证展示与模型上下文的顺序稳定。
+        const lastMessage = await messageRepository
+          .findOne({
+            where: { chatId },
+            order: { sequence: 'DESC' },
+            withDeleted: true,
+          });
 
-        await messages.save(messages.create({
+        await messageRepository.save(messageRepository.create({
           id: message.id,
           chatId,
           role: message.role,
           parts: message.parts,
           metadata: message.metadata ?? null,
-          sequence: Number(result?.sequence ?? -1) + 1,
+          sequence: (lastMessage?.sequence ?? -1) + 1,
           createdBy: DEMO_USER_ID,
           updatedBy: DEMO_USER_ID,
           deletedBy: null,
         }));
       }
 
-      if (touchChat) {
+      if (updateChatTimestamp) {
+        // 用户消息已在创建会话时更新时间；助手完成后再推动会话到列表顶部。
         chat.updatedBy = DEMO_USER_ID;
-        await manager.getRepository(ChatEntity).save(chat);
+        await chatRepository.save(chat);
       }
     });
   }
@@ -244,7 +249,6 @@ export class ChatsService {
     return {
       id: chat.id,
       title: chat.title,
-      visibility: chat.visibility,
       createdAt: chat.createdAt.toISOString(),
       messages: await this.getMessages(chat.id),
     };

@@ -1,6 +1,5 @@
 import ModalConfirm from '~/components/ModalConfirm.vue';
 import ModalRename from '~/components/ModalRename.vue';
-import type { ChatVisibility } from '~/types/chat';
 
 export function useChatActions() {
   const api = useApi();
@@ -27,10 +26,6 @@ export function useChatActions() {
     return chat.title;
   }
 
-  async function updateVisibility(id: string, visibility: ChatVisibility) {
-    return api.updateChat(id, { visibility });
-  }
-
   async function deleteChat(id: string) {
     const confirmed = await deleteModal.open().result;
 
@@ -44,5 +39,5 @@ export function useChatActions() {
     return true;
   }
 
-  return { renameChat, updateVisibility, deleteChat };
+  return { renameChat, deleteChat };
 }

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ChatsModule } from '../chats/chats.module';
-import { AiConfig } from './ai.config';
-import { AiController } from './ai.controller';
-import { AiService } from './ai.service';
+import { AiConfigModule } from './ai-config.module';
+import { ChatStreamController } from './chat-stream.controller';
+import { ChatStreamService } from './chat-stream.service';
 
 @Module({
-  imports: [ChatsModule],
-  controllers: [AiController],
-  providers: [AiConfig, AiService],
+  imports: [AiConfigModule, ChatsModule],
+  controllers: [ChatStreamController],
+  providers: [ChatStreamService],
 })
 export class AiModule {}

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/vue';
-import type { ChatStreamRequest } from '@recovery-assistant/shared';
-import type { Chat, ChatVote, ChatVisibility } from '~/types/chat';
+import type { ChatMessageMetadata, ChatStreamRequest } from '@recovery-assistant/shared';
+import type { Chat, ChatMessage, ChatVote } from '~/types/chat';
 
 const route = useRoute();
 const api = useApi();
@@ -11,18 +11,17 @@ const chatId = computed(() => String(route.params.id));
 const chat = ref<Chat | null>(null);
 const votes = ref<ChatVote[]>([]);
 const title = ref<string | null>(null);
-const visibility = ref<ChatVisibility>('private');
 const input = ref('');
 const editingMessageId = ref<string | null>(null);
 const loading = ref(true);
 
-const { messages, status, error, sendMessage, regenerate, stop } = useChat(() => ({
+const { messages, status, error, sendMessage, regenerate, stop } = useChat<ChatMessage>(() => ({
   id: chat.value?.id,
   messages: chat.value?.messages,
   generateId: () => crypto.randomUUID(),
   transport: new DefaultChatTransport({
     api: api.chatStreamUrl,
-    prepareSendMessagesRequest: ({ messages }) => ({ body: { chatId: chatId.value, messages } satisfies ChatStreamRequest<UIMessage> }),
+    prepareSendMessagesRequest: ({ messages }) => ({ body: { chatId: chatId.value, messages } satisfies ChatStreamRequest<UIMessage<ChatMessageMetadata>> }),
   }),
   onError(streamError) {
     toast.add({ description: streamError.message, icon: 'i-lucide-alert-circle', color: 'error', duration: 0 });
@@ -56,7 +55,6 @@ async function loadChat() {
     chat.value = nextChat;
     votes.value = nextVotes;
     title.value = nextChat.title;
-    visibility.value = nextChat.visibility;
 
     const initialMessage = nextChat.messages[0];
     if (nextChat.messages.length === 1 && initialMessage?.role === 'user') {
@@ -147,7 +145,6 @@ function reload() {
         <template #title>
           <ChatTitle :chat-id="chat.id" :title="title" @update="title = $event" />
         </template>
-        <ChatVisibility :chat-id="chat.id" :visibility="visibility" @update="visibility = $event" />
       </Navbar>
     </template>
 
@@ -167,7 +164,10 @@ function reload() {
 
         <UChatPrompt v-model="input" :error="error" color="neutral" variant="subtle" class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10" :ui="{ base: 'px-1.5' }" @submit="submit">
           <template #footer>
-            <ModelSelect />
+            <div class="flex items-center gap-4">
+              <ModelSelect />
+              <ChatContextUsage :messages="messages" />
+            </div>
             <UChatPromptSubmit :status="status" color="neutral" size="sm" @stop="stop()" @reload="reload" />
           </template>
         </UChatPrompt>
