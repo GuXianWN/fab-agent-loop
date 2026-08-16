@@ -7,7 +7,7 @@ import type {
   CreateChatInput,
   R as ApiResponse,
   Session,
-  SetChatVoteInput,
+  SetMessageVoteInput,
   UpdateChatInput,
 } from '@recovery-assistant/shared';
 import type { UIMessage } from 'ai';
@@ -41,7 +41,7 @@ export function useApi() {
     updateChat: (id: string, body: UpdateChatInput) => requestData<ChatDetail>(`/chats/${id}/update`, { method: 'POST', body }),
     removeChat: (id: string) => requestData<null>(`/chats/${id}/delete`, { method: 'POST' }),
     listVotes: (id: string) => requestData<ChatVote[]>(`/chats/${id}/votes`),
-    setVote: (id: string, body: SetChatVoteInput) => requestData<ChatVote | null>(`/chats/${id}/votes`, { method: 'POST', body }),
+    setVote: (chatId: string, messageId: string, body: SetMessageVoteInput) => requestData<null>(`/chats/${chatId}/messages/${messageId}/vote`, { method: 'POST', body }),
     removeMessage: (chatId: string, messageId: string) => requestData<null>(`/chats/${chatId}/messages/${messageId}/delete`, { method: 'POST' }),
   };
 }

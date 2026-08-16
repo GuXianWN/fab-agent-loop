@@ -1,5 +1,5 @@
-import { IsBoolean, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
-import type { CreateChatInput, SetChatVoteInput, UpdateChatInput } from '@recovery-assistant/shared';
+import { IsBoolean, IsString, MaxLength, ValidateIf } from 'class-validator';
+import type { CreateChatInput, SetMessageVoteInput, UpdateChatInput } from '@recovery-assistant/shared';
 
 export class CreateChatDto implements CreateChatInput {
   @ValidateIf((_object, value) => value !== undefined)
@@ -15,10 +15,7 @@ export class UpdateChatDto implements UpdateChatInput {
 
 }
 
-export class SetChatVoteDto implements SetChatVoteInput {
-  @IsUUID()
-  messageId!: string;
-
+export class SetMessageVoteDto implements SetMessageVoteInput {
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isUpvoted?: boolean;

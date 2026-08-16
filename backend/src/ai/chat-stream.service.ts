@@ -12,6 +12,7 @@ import type { Response } from 'express';
 import type { ChatContext, ChatMessageMetadata } from '@recovery-assistant/shared';
 import { AiConfig } from './ai.config';
 import { ChatsService } from '../chats/chats.service';
+import { ChatTitleService } from './chat-title.service';
 
 @Injectable()
 export class ChatStreamService {
@@ -20,6 +21,7 @@ export class ChatStreamService {
   constructor(
     private readonly config: AiConfig,
     private readonly chatsService: ChatsService,
+    private readonly chatTitleService: ChatTitleService,
   ) {}
 
   async getContext(chatId: string): Promise<ChatContext> {
@@ -40,6 +42,7 @@ export class ChatStreamService {
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL,
     });
+    const titlePromise = this.chatTitleService.generate(chatId, modelMessages);
 
     const result = streamText({
       model: deepSeek(this.config.model),
@@ -80,6 +83,7 @@ export class ChatStreamService {
           // 仅在流正常完成时持久化完整的助手消息。
           if (!isAborted && responseMessage.parts.length) {
             await this.chatsService.saveAssistantMessage(chatId, responseMessage);
+            await this.chatTitleService.save(chatId, await titlePromise);
           }
         },
       }),

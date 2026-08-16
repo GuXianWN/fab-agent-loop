@@ -7,6 +7,7 @@ import type { Chat, ChatMessage, ChatVote } from '~/types/chat';
 const route = useRoute();
 const api = useApi();
 const toast = useToast();
+const { refresh: refreshChats } = useChats();
 const chatId = computed(() => String(route.params.id));
 const chat = ref<Chat | null>(null);
 const votes = ref<ChatVote[]>([]);
@@ -79,7 +80,14 @@ watch(chatId, loadChat, { immediate: true });
 
 watch(status, async (currentStatus, previousStatus) => {
   if (currentStatus === 'ready' && previousStatus !== 'ready' && chat.value) {
-    await loadContext(chat.value.id);
+    const id = chat.value.id;
+    const [nextChat, nextContext] = await Promise.all([api.getChat(id), api.getChatContext(id)]);
+
+    if (chat.value?.id === id) {
+      title.value = nextChat.title;
+      context.value = nextContext;
+      await refreshChats();
+    }
   }
 });
 
@@ -106,7 +114,7 @@ async function vote(message: UIMessage, isUpvoted: boolean) {
     : [...votes.value.filter((vote) => vote.messageId !== message.id), { chatId: chatId.value, messageId: message.id, isUpvoted: next }];
 
   try {
-    await api.setVote(chatId.value, { messageId: message.id, isUpvoted: next });
+    await api.setVote(chatId.value, message.id, { isUpvoted: next });
   } catch {
     votes.value = snapshot;
     toast.add({ description: 'Failed to save vote', icon: 'i-lucide-alert-circle', color: 'error' });

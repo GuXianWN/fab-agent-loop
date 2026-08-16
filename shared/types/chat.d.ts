@@ -39,8 +39,7 @@ export interface UpdateChatInput {
   title?: string | null;
 }
 
-export interface SetChatVoteInput {
-  messageId: string;
+export interface SetMessageVoteInput {
   isUpvoted?: boolean;
 }
 

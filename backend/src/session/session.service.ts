@@ -1,20 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import type { Session, User } from '@recovery-assistant/shared';
-import { DEMO_USER_ID } from '../database/entities';
-
-const user: User = {
-  id: DEMO_USER_ID,
-  name: 'Demo User',
-  username: 'demo_user',
-  avatar: 'https://github.com/nuxt.png',
-};
+import type { Session } from '@recovery-assistant/shared';
+import { getUser } from '../common/user-context';
 
 @Injectable()
 export class SessionService {
   private loggedIn = false;
 
   get(): Session {
-    return { user: this.loggedIn ? user : null };
+    return { user: this.loggedIn ? getUser() : null };
   }
 
   login() {

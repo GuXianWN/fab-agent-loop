@@ -1,15 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import type { UIMessage } from 'ai';
-import { randomUUID } from 'node:crypto';
-import { Repository } from 'typeorm';
-import type { Chat, ChatSummary, ChatVote, UpdateChatInput } from '@recovery-assistant/shared';
-import {
-  ChatEntity,
-  DEMO_USER_ID,
-  MessageEntity,
-  MessageVoteEntity,
-} from '../database/entities';
+import {Injectable, NotFoundException} from '@nestjs/common';
+import {InjectRepository} from '@nestjs/typeorm';
+import type {UIMessage} from 'ai';
+import {randomUUID} from 'node:crypto';
+import {Repository} from 'typeorm';
+import type {Chat, ChatVote, UpdateChatInput} from '@recovery-assistant/shared';
+import {ChatEntity, MessageEntity, MessageVoteEntity,} from '../database/entities';
+import {getUser} from '../common/user-context';
+
+type ChatResult = Omit<Chat<UIMessage>, 'createdAt'> & { createdAt: Date };
 
 @Injectable()
 export class ChatsService {
@@ -19,22 +17,20 @@ export class ChatsService {
     @InjectRepository(MessageVoteEntity) private readonly votes: Repository<MessageVoteEntity>,
   ) {}
 
-  async list(): Promise<ChatSummary[]> {
-    const chats = await this.chats.find({
-      where: { userId: DEMO_USER_ID },
-      order: { updatedAt: 'DESC' },
+  async list(): Promise<ChatEntity[]> {
+    return await this.chats.find({
+      where: {userId: getUser().id},
+      order: {updatedAt: 'DESC'},
     });
-
-    return chats.map(({ id, title, createdAt }) => ({ id, title, createdAt: createdAt.toISOString() }));
   }
 
-  async create(input?: string): Promise<Chat<UIMessage>> {
+  async create(input?: string): Promise<ChatResult> {
     const chat = this.chats.create({
       id: randomUUID(),
-      userId: DEMO_USER_ID,
+      userId: getUser().id,
       title: null,
-      createdBy: DEMO_USER_ID,
-      updatedBy: DEMO_USER_ID,
+      createdBy: getUser().id,
+      updatedBy: getUser().id,
       deletedBy: null,
     });
 
@@ -49,8 +45,8 @@ export class ChatsService {
           parts: [{ type: 'text', text: input }],
           metadata: null,
           sequence: 0,
-          createdBy: DEMO_USER_ID,
-          updatedBy: DEMO_USER_ID,
+            createdBy: getUser().id,
+            updatedBy: getUser().id,
           deletedBy: null,
         });
       }
@@ -59,15 +55,28 @@ export class ChatsService {
     return this.toChat(chat);
   }
 
-  async get(id: string): Promise<Chat<UIMessage>> {
+  async get(id: string): Promise<ChatResult> {
     return this.toChat(await this.requireChat(id));
   }
 
-  async update(id: string, update: UpdateChatInput): Promise<Chat<UIMessage>> {
+  async getTitle(id: string): Promise<string | null> {
+    return (await this.requireChat(id)).title;
+  }
+
+  async saveGeneratedTitle(id: string, title: string): Promise<void> {
+    await this.chats
+      .createQueryBuilder()
+      .update(ChatEntity)
+      .set({ title, updatedBy: getUser().id })
+      .where('id = :id AND user_id = :userId AND title IS NULL', { id, userId: getUser().id })
+      .execute();
+  }
+
+  async update(id: string, update: UpdateChatInput): Promise<ChatResult> {
     const chat = await this.requireChat(id);
 
     if (update.title !== undefined) chat.title = update.title;
-    chat.updatedBy = DEMO_USER_ID;
+    chat.updatedBy = getUser().id;
 
     return this.toChat(await this.chats.save(chat));
   }
@@ -76,8 +85,8 @@ export class ChatsService {
     const result = await this.chats
       .createQueryBuilder()
       .update(ChatEntity)
-      .set({ deletedAt: new Date(), deletedBy: DEMO_USER_ID, updatedBy: DEMO_USER_ID })
-      .where('id = :id AND user_id = :userId AND deleted_at IS NULL', { id, userId: DEMO_USER_ID })
+      .set({ deletedAt: new Date(), deletedBy: getUser().id, updatedBy: getUser().id })
+      .where('id = :id AND user_id = :userId AND deleted_at IS NULL', { id, userId: getUser().id })
       .execute();
 
     if (result.affected !== 1) throw new NotFoundException('chat not found');
@@ -88,7 +97,7 @@ export class ChatsService {
     const votes = await this.votes
       .createQueryBuilder('vote')
       .innerJoin(MessageEntity, 'message', 'message.id = vote.message_id AND message.deleted_at IS NULL')
-      .where('vote.user_id = :userId', { userId: DEMO_USER_ID })
+      .where('vote.user_id = :userId', { userId: getUser().id })
       .andWhere('message.chat_id = :chatId', { chatId })
       .orderBy('vote.created_at', 'ASC')
       .getMany();
@@ -100,34 +109,33 @@ export class ChatsService {
     }));
   }
 
-  async setVote(chatId: string, messageId: string, isUpvoted?: boolean): Promise<ChatVote | undefined> {
+  async setVote(chatId: string, messageId: string, isUpvoted?: boolean): Promise<void> {
     await this.requireMessage(chatId, messageId);
     const vote = await this.votes.findOne({
-      where: { userId: DEMO_USER_ID, messageId },
+      where: { userId: getUser().id, messageId },
       withDeleted: true,
     });
 
     if (isUpvoted === undefined) {
       if (vote && !vote.deletedAt) await this.softDeleteVote(vote.id);
-      return undefined;
+      return;
     }
 
     const entity = vote ?? this.votes.create({
       id: randomUUID(),
-      userId: DEMO_USER_ID,
+      userId: getUser().id,
       messageId,
       value: isUpvoted ? 1 : -1,
-      createdBy: DEMO_USER_ID,
-      updatedBy: DEMO_USER_ID,
+      createdBy: getUser().id,
+      updatedBy: getUser().id,
       deletedBy: null,
     });
     entity.value = isUpvoted ? 1 : -1;
-    entity.updatedBy = DEMO_USER_ID;
+    entity.updatedBy = getUser().id;
     entity.deletedAt = null;
     entity.deletedBy = null;
     await this.votes.save(entity);
 
-    return { chatId, messageId, isUpvoted };
   }
 
   async removeMessage(chatId: string, messageId: string): Promise<void> {
@@ -135,7 +143,7 @@ export class ChatsService {
     await this.messages
       .createQueryBuilder()
       .update(MessageEntity)
-      .set({ deletedAt: new Date(), deletedBy: DEMO_USER_ID, updatedBy: DEMO_USER_ID })
+      .set({ deletedAt: new Date(), deletedBy: getUser().id, updatedBy: getUser().id })
       .where('chat_id = :chatId AND sequence >= :sequence AND deleted_at IS NULL', {
         chatId,
         sequence: message.sequence,
@@ -165,7 +173,7 @@ export class ChatsService {
   }
 
   private async requireChat(id: string): Promise<ChatEntity> {
-    const chat = await this.chats.findOne({ where: { id, userId: DEMO_USER_ID } });
+    const chat = await this.chats.findOne({ where: { id, userId: getUser().id } });
     if (!chat) throw new NotFoundException('chat not found');
     return chat;
   }
@@ -184,7 +192,7 @@ export class ChatsService {
   private async saveMessage(chatId: string, message: UIMessage, updateChatTimestamp = false): Promise<void> {
     await this.chats.manager.transaction(async (manager) => {
       const chatRepository = manager.getRepository(ChatEntity);
-      const chat = await chatRepository.findOne({ where: { id: chatId, userId: DEMO_USER_ID } });
+      const chat = await chatRepository.findOne({ where: { id: chatId, userId: getUser().id } });
 
       if (!chat) throw new NotFoundException('chat not found');
 
@@ -202,7 +210,7 @@ export class ChatsService {
           role: message.role,
           parts: message.parts,
           metadata: message.metadata ?? null,
-          updatedBy: DEMO_USER_ID,
+          updatedBy: getUser().id,
           deletedAt: null,
           deletedBy: null,
         }));
@@ -222,15 +230,15 @@ export class ChatsService {
           parts: message.parts,
           metadata: message.metadata ?? null,
           sequence: (lastMessage?.sequence ?? -1) + 1,
-          createdBy: DEMO_USER_ID,
-          updatedBy: DEMO_USER_ID,
+          createdBy: getUser().id,
+          updatedBy: getUser().id,
           deletedBy: null,
         }));
       }
 
       if (updateChatTimestamp) {
         // 用户消息已在创建会话时更新时间；助手完成后再推动会话到列表顶部。
-        chat.updatedBy = DEMO_USER_ID;
+        chat.updatedBy = getUser().id;
         await chatRepository.save(chat);
       }
     });
@@ -240,16 +248,16 @@ export class ChatsService {
     await this.votes
       .createQueryBuilder()
       .update(MessageVoteEntity)
-      .set({ deletedAt: new Date(), deletedBy: DEMO_USER_ID, updatedBy: DEMO_USER_ID })
+      .set({ deletedAt: new Date(), deletedBy: getUser().id, updatedBy: getUser().id })
       .where('id = :id AND deleted_at IS NULL', { id })
       .execute();
   }
 
-  private async toChat(chat: ChatEntity): Promise<Chat<UIMessage>> {
+  private async toChat(chat: ChatEntity): Promise<ChatResult> {
     return {
       id: chat.id,
       title: chat.title,
-      createdAt: chat.createdAt.toISOString(),
+      createdAt: chat.createdAt,
       messages: await this.getMessages(chat.id),
     };
   }

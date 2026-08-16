@@ -7,7 +7,7 @@ export type {
   ChatTokenUsage,
   ChatVote,
   CreateChatInput,
-  SetChatVoteInput,
+  SetMessageVoteInput,
   UpdateChatInput,
 } from './chat';
 export type { Session, User } from './session';
