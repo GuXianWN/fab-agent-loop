@@ -9,7 +9,7 @@ import {
 } from 'ai';
 import { randomUUID } from 'node:crypto';
 import type { Response } from 'express';
-import type { ChatMessageMetadata } from '@recovery-assistant/shared';
+import type { ChatContext, ChatMessageMetadata } from '@recovery-assistant/shared';
 import { AiConfig } from './ai.config';
 import { ChatsService } from '../chats/chats.service';
 
@@ -22,11 +22,20 @@ export class ChatStreamService {
     private readonly chatsService: ChatsService,
   ) {}
 
+  async getContext(chatId: string): Promise<ChatContext> {
+    const modelMessages = await this.getModelMessages(chatId);
+
+    return {
+      contextWindow: this.config.contextWindow,
+      estimatedTokens: Math.max(0, Math.round(JSON.stringify(modelMessages).length / 4)),
+    };
+  }
+
   async streamChat(chatId: string, messages: UIMessage<ChatMessageMetadata>[], response: Response): Promise<void> {
     // 只持久化本次新增的最后一条用户消息。
     await this.chatsService.saveLatestUserMessage(chatId, messages);
     // 模型上下文始终从数据库历史恢复，不直接信任客户端传来的完整消息列表。
-    const persistedMessages = await this.chatsService.getMessages(chatId);
+    const modelMessages = await this.getModelMessages(chatId);
     const deepSeek = createDeepSeek({
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL,
@@ -35,7 +44,7 @@ export class ChatStreamService {
     const result = streamText({
       model: deepSeek(this.config.model),
       // UIMessage 用于前端和 SSE，调用模型前转换为 ModelMessage。
-      messages: await convertToModelMessages(persistedMessages),
+      messages: modelMessages,
       providerOptions: {
         deepseek: {
           thinking: { type: 'enabled' },
@@ -75,5 +84,9 @@ export class ChatStreamService {
         },
       }),
     });
+  }
+
+  private async getModelMessages(chatId: string) {
+    return convertToModelMessages(await this.chatsService.getMessages(chatId));
   }
 }

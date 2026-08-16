@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/vue';
-import type { ChatMessageMetadata, ChatStreamRequest } from '@recovery-assistant/shared';
+import type { ChatContext, ChatMessageMetadata, ChatStreamRequest } from '@recovery-assistant/shared';
 import type { Chat, ChatMessage, ChatVote } from '~/types/chat';
 
 const route = useRoute();
@@ -10,6 +10,7 @@ const toast = useToast();
 const chatId = computed(() => String(route.params.id));
 const chat = ref<Chat | null>(null);
 const votes = ref<ChatVote[]>([]);
+const context = ref<ChatContext | null>(null);
 const title = ref<string | null>(null);
 const input = ref('');
 const editingMessageId = ref<string | null>(null);
@@ -27,6 +28,10 @@ const { messages, status, error, sendMessage, regenerate, stop } = useChat<ChatM
     toast.add({ description: streamError.message, icon: 'i-lucide-alert-circle', color: 'error', duration: 0 });
   },
 }));
+
+async function loadContext(id: string) {
+  context.value = await api.getChatContext(id);
+}
 
 async function waitForMessage(messageId: string): Promise<void> {
   if (messages.value.some((message) => message.id === messageId)) return;
@@ -49,11 +54,13 @@ async function loadChat() {
   try {
     const nextChat = await api.getChat(id);
     const nextVotes = await api.listVotes(id);
+    const nextContext = await api.getChatContext(id);
 
     if (chatId.value !== id) return;
 
     chat.value = nextChat;
     votes.value = nextVotes;
+    context.value = nextContext;
     title.value = nextChat.title;
 
     const initialMessage = nextChat.messages[0];
@@ -69,6 +76,12 @@ async function loadChat() {
 }
 
 watch(chatId, loadChat, { immediate: true });
+
+watch(status, async (currentStatus, previousStatus) => {
+  if (currentStatus === 'ready' && previousStatus !== 'ready' && chat.value) {
+    await loadContext(chat.value.id);
+  }
+});
 
 function submit(event: Event) {
   event.preventDefault();
@@ -162,12 +175,12 @@ function reload() {
           </template>
         </UChatMessages>
 
-        <UChatPrompt v-model="input" :error="error" color="neutral" variant="subtle" class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10" :ui="{ base: 'px-1.5' }" @submit="submit">
+        <UChatPrompt v-model="input" :error="error" color="neutral" variant="subtle" class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10" :ui="{ base: 'px-1.5 pt-[24px]' }" @submit="submit">
+          <template #default>
+            <ChatContextUsage :context="context" class="absolute right-3.5" />
+          </template>
           <template #footer>
-            <div class="flex items-center gap-4">
-              <ModelSelect />
-              <ChatContextUsage :messages="messages" />
-            </div>
+            <ModelSelect />
             <UChatPromptSubmit :status="status" color="neutral" size="sm" @stop="stop()" @reload="reload" />
           </template>
         </UChatPrompt>

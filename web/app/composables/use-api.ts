@@ -1,5 +1,6 @@
 import type {
   Chat,
+  ChatContext,
   ChatSummary,
   ChatMessageMetadata,
   ChatVote,
@@ -30,6 +31,7 @@ export function useApi() {
 
   return {
     chatStreamUrl: `${baseURL}/ai/chat`,
+    getChatContext: (id: string) => requestData<ChatContext>(`/ai/chats/${id}/context`),
     getSession: () => requestData<Session>('/session'),
     login: () => requestData<Session>('/session/login', { method: 'POST' }),
     logout: () => requestData<Session>('/session/logout', { method: 'POST' }),

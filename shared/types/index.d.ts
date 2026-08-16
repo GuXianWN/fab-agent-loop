@@ -1,5 +1,6 @@
 export type {
   Chat,
+  ChatContext,
   ChatMessageMetadata,
   ChatStreamRequest,
   ChatSummary,

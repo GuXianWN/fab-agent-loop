@@ -10,6 +10,11 @@ export interface ChatMessageMetadata {
   usage: ChatTokenUsage;
 }
 
+export interface ChatContext {
+  contextWindow: number;
+  estimatedTokens: number;
+}
+
 export interface ChatSummary {
   id: string;
   title: string | null;
