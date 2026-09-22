@@ -8,7 +8,7 @@
 
 - 前端入口为 `web/`，路由为 `/` 和 `/chat/:id`；构建产物是 `web/.output/public`。
 - 后端入口为 `backend/`，全局 API 前缀为 `/api`，允许全部跨域。
-- 当前实际模型由 `backend/.env` 的 `OPENAI_*` 配置决定；示例配置为 `https://api.deepseek.com` 与 `deepseek-v4-flash`。后端使用 `@ai-sdk/deepseek` 的 Chat Completions provider，并显式启用 `thinking`，从 `reasoning_content` 流式恢复可展示的 reasoning parts。前端仅展示同一个固定模型，不提供模型管理。
+- 当前实际模型由 `backend/.env` 的 `OPENAI_*` 配置决定；示例配置为 `https://api.deepseek.com` 与 `deepseek-v4-flash`。后端使用 Mastra Agent 和 `@ai-sdk/deepseek` Provider V4，并通过 `@mastra/ai-sdk` 输出 AI SDK v7 UI-message 流。前端仅展示同一个固定模型，不提供模型管理。
 - 会话数据已改为 PostgreSQL 存储；登录仍是进程内 `Demo User` Mock，固定用户 ID 为 `00000000-0000-4000-8000-000000000001`。
 - 根目录 `shared/` 是本地 Node 类型包 `@recovery-assistant/shared`，其中的 `.d.ts` 文件存放共享 DTO、聊天、会话和泛型 `R<T>` 响应类型；其代码不依赖 Nuxt、Nest、TypeORM 或 AI SDK。前后端均通过 `import type { ... } from '@recovery-assistant/shared'` 导入。
 

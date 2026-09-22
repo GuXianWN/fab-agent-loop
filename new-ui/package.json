@@ -14,13 +14,13 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/vue": "^4.0.66",
+    "@ai-sdk/vue": "4.0.108",
     "@comark/vue": "^0.6.2",
     "@nuxt/ui": "4.10.0",
     "@recovery-assistant/shared": "file:../shared",
     "@shikijs/langs": "^4.4.3",
     "@vueuse/core": "^14.4.0",
-    "ai": "^7.0.66",
+    "ai": "7.0.108",
     "axios": "^1.7.9",
     "dayjs": "^1.11.23",
     "lodash": "^4.18.1",

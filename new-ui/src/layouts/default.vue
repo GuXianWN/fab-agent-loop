@@ -1,33 +1,22 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui';
+import { storeToRefs } from 'pinia';
+import { useChatsStore } from '~/stores/chats';
 
 const route = useRoute();
 const sidebarOpen = ref(false);
 const searchOpen = ref(false);
 const loggedIn = ref(false);
 
-const groups = ref([
-  {
-    id: 'last-week',
-    label: 'Last week',
-    items: [
-      {
-        id: 'ea29d85d-d09c-4343-9e61-0755ae37d77e',
-        title: '你是谁',
-        label: '你是谁',
-        to: '/chat/ea29d85d-d09c-4343-9e61-0755ae37d77e',
-        icon: 'i-lucide-message-square',
-      },
-      {
-        id: '551a73e1-f32d-477c-b198-c437cc6a8c7c',
-        title: 'Manufacturing Incident Runbook',
-        label: 'Manufacturing Incident Runbook',
-        to: '/chat/551a73e1-f32d-477c-b198-c437cc6a8c7c',
-        icon: 'i-lucide-message-square',
-      },
-    ],
-  },
-]);
+const chatsStore = useChatsStore();
+const toast = useToast();
+const { chats } = storeToRefs(chatsStore);
+const groups = computed(() => [{ id: 'chats', label: 'Chats', items: chats.value.map(chat => ({ ...chat, label: chat.title || 'Untitled', to: `/chat/${chat.id}` })) }]);
+async function refreshChats() {
+  try { await chatsStore.refresh(); }
+  catch (error) { toast.add({ description: error instanceof Error ? error.message : 'Failed to load chats', color: 'error' }); }
+}
+watch(() => route.path, refreshChats, { immediate: true });
 
 const items = computed(() => groups.value.flatMap((group) => [{
   label: group.label,

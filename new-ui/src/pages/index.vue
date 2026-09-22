@@ -1,4 +1,18 @@
 <script setup lang="ts">
+const api = useApi();
+const router = useRouter();
+const toast = useToast();
+const loading = ref(false);
+async function createChat(prompt: string) {
+  if (loading.value || !prompt.trim()) return;
+  loading.value = true;
+  try {
+    const chat = await api.createChat({ input: prompt.trim() });
+    await router.push(`/chat/${chat.id}`);
+  } catch (error) {
+    toast.add({ description: error instanceof Error ? error.message : 'Failed to create chat', color: 'error' });
+  } finally { loading.value = false; }
+}
 const input = ref('');
 const greeting = ref('Good evening');
 
@@ -21,15 +35,15 @@ const quickChats = [
       <UContainer class="flex-1 flex flex-col justify-center gap-4 sm:gap-6 py-8">
         <h1 class="text-3xl sm:text-4xl text-highlighted font-bold">{{ greeting }}</h1>
 
-        <UChatPrompt v-model="input" status="ready" class="[view-transition-name:chat-prompt]" color="neutral" variant="subtle" :ui="{ base: 'px-1.5' }">
+        <UChatPrompt v-model="input" :status="loading ? 'submitted' : 'ready'" @submit="createChat(input)" class="[view-transition-name:chat-prompt]" color="neutral" variant="subtle" :ui="{ base: 'px-1.5' }">
           <template #footer>
             <ModelSelect />
-            <UChatPromptSubmit color="neutral" size="sm" />
+            <UChatPromptSubmit :status="loading ? 'submitted' : 'ready'" color="neutral" size="sm" />
           </template>
         </UChatPrompt>
 
         <div class="flex flex-wrap gap-2">
-          <UButton v-for="quickChat in quickChats" :key="quickChat.label" :icon="quickChat.icon" :label="quickChat.label" size="sm" color="neutral" variant="outline" class="rounded-full" />
+          <UButton v-for="quickChat in quickChats" :key="quickChat.label" :disabled="loading" @click="createChat(quickChat.label)" :icon="quickChat.icon" :label="quickChat.label" size="sm" color="neutral" variant="outline" class="rounded-full" />
         </div>
       </UContainer>
     </template>

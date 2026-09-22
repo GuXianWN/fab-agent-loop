@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.30.1",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "build": "nest build",
     "migration:run": "pnpm run build && typeorm migration:run -d dist/database/data-source.js",
@@ -12,12 +15,14 @@
   },
   "dependencies": {
     "@ai-sdk/deepseek": "3.0.28",
+    "@mastra/ai-sdk": "1.10.3",
+    "@mastra/core": "1.67.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.3",
     "@recovery-assistant/shared": "file:../shared",
-    "ai": "^7.0.65",
+    "ai": "7.0.108",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
