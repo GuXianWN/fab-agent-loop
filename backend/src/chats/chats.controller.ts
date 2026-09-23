@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { R } from '../common/r';
 import { CreateChatDto, SetMessageVoteDto, UpdateChatDto } from './dto/chat.dto';
 import { ChatsService } from './chats.service';
@@ -18,14 +18,14 @@ export class ChatsController {
   }
 
   @Get(':id/votes')
-  async listVotes(@Param('id', ParseUUIDPipe) chatId: string) {
+  async listVotes(@Param('id') chatId: string) {
     return R.success().data(await this.chatsService.listVotes(chatId));
   }
 
   @Post(':id/messages/:messageId/vote')
   async setVote(
-    @Param('id', ParseUUIDPipe) chatId: string,
-    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Param('id') chatId: string,
+    @Param('messageId') messageId: string,
     @Body() body: SetMessageVoteDto,
   ) {
     await this.chatsService.setVote(chatId, messageId, body.isUpvoted);
@@ -33,23 +33,23 @@ export class ChatsController {
   }
 
   @Post(':id/messages/:messageId/delete')
-  async removeMessage(@Param('id', ParseUUIDPipe) id: string, @Param('messageId', ParseUUIDPipe) messageId: string) {
+  async removeMessage(@Param('id') id: string, @Param('messageId') messageId: string) {
     await this.chatsService.removeMessage(id, messageId);
     return R.success().data(null);
   }
 
   @Get(':id')
-  async get(@Param('id', ParseUUIDPipe) id: string) {
+  async get(@Param('id') id: string) {
     return R.success().data(await this.chatsService.get(id));
   }
 
   @Post(':id/update')
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() body: UpdateChatDto) {
+  async update(@Param('id') id: string, @Body() body: UpdateChatDto) {
     return R.success().data(await this.chatsService.update(id, body));
   }
 
   @Post(':id/delete')
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id') id: string) {
     await this.chatsService.remove(id);
     return R.success().data(null);
   }

@@ -5,13 +5,19 @@ import { databaseEntities } from './entities';
 
 @Injectable()
 export class DatabaseConfig {
+  readonly host = process.env.POSTGRES_HOST!;
+  readonly port = Number(process.env.POSTGRES_PORT!);
+  readonly user = process.env.POSTGRES_USER!;
+  readonly password = process.env.POSTGRES_PASSWORD!;
+  readonly database = process.env.POSTGRES_DATABASE!;
+
   readonly dataSourceOptions: DataSourceOptions = {
     type: 'postgres',
-    host: process.env.POSTGRES_HOST!,
-    port: Number(process.env.POSTGRES_PORT!),
-    username: process.env.POSTGRES_USER!,
-    password: process.env.POSTGRES_PASSWORD!,
-    database: process.env.POSTGRES_DATABASE!,
+    host: this.host,
+    port: this.port,
+    username: this.user,
+    password: this.password,
+    database: this.database,
     entities: databaseEntities,
   };
 

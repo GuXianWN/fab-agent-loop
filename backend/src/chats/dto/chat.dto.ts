@@ -12,7 +12,6 @@ export class UpdateChatDto implements UpdateChatInput {
   @IsString()
   @MaxLength(256)
   title?: string | null;
-
 }
 
 export class SetMessageVoteDto implements SetMessageVoteInput {

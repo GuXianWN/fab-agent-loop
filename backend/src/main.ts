@@ -11,7 +11,7 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
-  await app.listen(3001);
+  await app.listen(Number(process.env.PORT ?? 3001));
 }
 
 void bootstrap();

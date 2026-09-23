@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Post, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import { safeValidateUIMessages } from 'ai';
 import type { Response } from 'express';
 import type { ChatMessageMetadata } from '@recovery-assistant/shared';
@@ -12,7 +12,7 @@ export class ChatStreamController {
   constructor(private readonly chatStreamService: ChatStreamService) {}
 
   @Get('chats/:id/context')
-  async context(@Param('id', ParseUUIDPipe) id: string) {
+  async context(@Param('id') id: string) {
     return R.success().data(await this.chatStreamService.getContext(id));
   }
 
