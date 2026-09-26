@@ -1,6 +1,6 @@
 # 前端迁移状态
 
-`new-ui/` 已成为项目的 Vue 3 + Vite 前端；旧 Nuxt `web/` 已移除。当前后端为 NestJS + Mastra Agent，消息历史和投票状态由 Mastra PostgreSQL Memory 保存。运行方式和 API 约定见 [README.md](../README.md)，详细交接见 [HANDOFF.md](HANDOFF.md)。
+`frontend/` 已成为项目的 Vue 3 + Vite 前端；旧 Nuxt `web/` 已移除。当前后端为 NestJS + Mastra Agent，消息历史和投票状态由 Mastra PostgreSQL Memory 保存。运行方式和 API 约定见 [README.md](../README.md)，详细交接见 [HANDOFF.md](HANDOFF.md)。
 
 ## 已记录的验收范围
 
@@ -8,6 +8,6 @@
 - 多轮追问能使用已持久化的历史消息。
 - 前端正常渲染回复，刷新后能恢复消息。
 
-以上行为已在真实浏览器中验证；`new-ui` 的类型检查和构建通过。后端投票接口另验证了点赞、取消和点踩的持久化。
+以上行为已在真实浏览器中验证；`frontend` 的类型检查和构建通过。后端投票接口另验证了点赞、取消和点踩的持久化。
 
 编辑、重新生成、停止生成等更广泛的前端交互尚未完成回归验证，不应把旧迁移计划中的全部条目视为已验收。
