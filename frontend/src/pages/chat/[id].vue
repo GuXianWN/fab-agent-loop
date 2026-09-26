@@ -186,12 +186,12 @@ function reload() {
 
     <template #body>
       <UContainer class="flex-1 flex flex-col gap-4 sm:gap-6">
-        <UChatMessages should-auto-scroll :messages="messages" :status="status" class="pt-(--ui-header-height) pb-4 sm:pb-6">
+        <UChatMessages should-auto-scroll :messages="messages" :status="status" class="pt-(--ui-header-height) pb-4 sm:pb-6" :ui="{ root: '[&>article]:last-of-type:min-h-0' }">
           <template #indicator>
             <div class="flex items-center gap-1.5"><ChatIndicator /><UChatShimmer text="Thinking..." class="text-sm" /></div>
           </template>
           <template #content="{ message }">
-            <ChatMessageContent :message="message" :editing="status === 'ready' && editingMessageId === message.id" @save="saveEdit" @cancel-edit="cancelEdit" />
+            <ChatMessageContent :message="message" :editing="status === 'ready' && editingMessageId === message.id" :streaming="status === 'streaming' && message.id === messages.at(-1)?.id" @save="saveEdit" @cancel-edit="cancelEdit" />
           </template>
           <template #actions="{ message }">
             <ChatMessageActions :message="message" :streaming="status === 'streaming' && message.id === messages.at(-1)?.id" :locked="status !== 'ready'" :editing="editingMessageId === message.id" :vote="getVote(message.id)" @edit="startEdit" @regenerate="regenerateMessage" @vote="vote" />

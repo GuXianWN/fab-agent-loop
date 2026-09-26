@@ -1,45 +1,56 @@
 <script setup lang="ts">
-import { isReasoningUIPart, isTextUIPart, isToolUIPart, type UIMessage } from 'ai';
-import { isPartStreaming } from '@nuxt/ui/utils/ai';
-import ChatComark from '../Comark';
-import MessageEdit from './MessageEdit.vue';
+import { isReasoningUIPart, isToolUIPart, type UIMessage } from 'ai';
+import ContentPart from './ContentPart.vue';
+import MessageProcess from './MessageProcess.vue';
 
-defineProps<{ message: UIMessage; editing: boolean }>();
+type Part = UIMessage['parts'][number];
+type Block =
+  | { kind: 'process'; key: string; parts: Part[] }
+  | { kind: 'part' | 'tool-output'; key: string; part: Part };
+
+const props = defineProps<{ message: UIMessage; editing: boolean; streaming: boolean }>();
 const emit = defineEmits<{ save: [message: UIMessage, text: string]; cancelEdit: [] }>();
 
-function formatTime(output: unknown): string {
-  return typeof output === 'object' && output !== null && 'dateTime' in output && typeof output.dateTime === 'string'
-    ? `${output.dateTime}（北京时间）`
-    : '已获取当前时间';
-}
+const blocks = computed(() => {
+  const result: Block[] = [];
+  let process: Extract<Block, { kind: 'process' }> | undefined;
+
+  props.message.parts.forEach((part, index) => {
+    if (part.type === 'step-start') return;
+
+    if (props.message.role === 'assistant' && (isReasoningUIPart(part) || isToolUIPart(part))) {
+      if (!process) {
+        process = { kind: 'process', key: `process-${index}`, parts: [] };
+        result.push(process);
+      }
+      process.parts.push(part);
+
+      if (isToolUIPart(part) && part.state === 'output-available') {
+        result.push({ kind: 'tool-output', key: `output-${index}`, part });
+        process = undefined;
+      }
+      return;
+    }
+
+    process = undefined;
+    result.push({ kind: 'part', key: `part-${index}`, part });
+  });
+
+  return result;
+});
 </script>
 
 <template>
-  <template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
-    <UChatReasoning v-if="isReasoningUIPart(part)" :text="part.text" :streaming="isPartStreaming(part)" chevron="leading">
-      <Suspense>
-        <ChatComark :value="part.text" :streaming="isPartStreaming(part)" />
-      </Suspense>
-    </UChatReasoning>
-
-    <UChatTool
-      v-else-if="isToolUIPart(part)"
-      :text="part.type === 'tool-getCurrentTime' ? '获取北京时间' : part.type === 'dynamic-tool' ? part.toolName : part.type.slice(5)"
-      :loading="part.state === 'input-streaming' || part.state === 'input-available'"
-      :suffix="part.state === 'output-error' ? '失败' : part.state === 'output-available' ? '已完成' : '执行中'"
-    >
-      <p v-if="part.state === 'output-available' && part.type === 'tool-getCurrentTime'" class="text-sm text-muted">{{ formatTime(part.output) }}</p>
-      <p v-else-if="part.state === 'output-error'" class="text-sm text-error">{{ part.errorText }}</p>
-    </UChatTool>
-
-    <template v-else-if="isTextUIPart(part)">
-      <Suspense v-if="message.role === 'assistant'">
-        <ChatComark :value="part.text" :streaming="isPartStreaming(part)" />
-      </Suspense>
-      <template v-else>
-        <MessageEdit v-if="editing" :message="message" :text="part.text" @save="(item, text) => emit('save', item, text)" @cancel="emit('cancelEdit')" />
-        <p v-else class="whitespace-pre-wrap">{{ part.text }}</p>
-      </template>
-    </template>
+  <template v-for="block in blocks" :key="block.key">
+    <MessageProcess v-if="block.kind === 'process'" :parts="block.parts" :streaming="streaming" />
+    <ContentPart
+      v-else
+      :part="block.part"
+      :message="message"
+      :editing="editing"
+      :view="block.kind === 'tool-output' ? 'tool-output' : 'message'"
+      @save="(item, text) => emit('save', item, text)"
+      @cancel-edit="emit('cancelEdit')"
+    />
   </template>
 </template>
