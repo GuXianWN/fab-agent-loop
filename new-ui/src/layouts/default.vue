@@ -11,7 +11,7 @@ const loggedIn = ref(false);
 const chatsStore = useChatsStore();
 const toast = useToast();
 const { chats } = storeToRefs(chatsStore);
-const groups = computed(() => [{ id: 'chats', label: 'Chats', items: chats.value.map(chat => ({ ...chat, label: chat.title || 'Untitled', to: `/chat/${chat.id}` })) }]);
+const groups = computed(() => [{ id: 'chats', label: 'Chats', items: chats.value.map(chat => ({ ...chat, label: chat.title || 'Untitled', to: { name: '/chat/[id]' as const, params: { id: chat.id } } })) }]);
 async function refreshChats() {
   try { await chatsStore.refresh(); }
   catch (error) { toast.add({ description: error instanceof Error ? error.message : 'Failed to load chats', color: 'error' }); }

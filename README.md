@@ -4,11 +4,17 @@
 
 ## Structure
 
-- `new-ui/`: 当前 Vue 3 + Vite 前端。
+- `new-ui/`: 当前 Vue 3 + Vite 前端；`presets/` 集中管理 Vite 配置与生成类型，`src/pages/` 提供类型化文件路由。
 - `backend/`: NestJS API，统一前缀为 `/api`；负责会话、投票和基于 Mastra Agent 的 DeepSeek 流式聊天。
 - `shared/`: 本地 Node 类型包 `@recovery-assistant/shared`，导出 HTTP DTO、聊天、会话和 `R<T>` 响应类型；不得依赖 Nuxt、Nest、TypeORM 或 AI SDK。
 
 会话标题保存在 `recovery_assistant.ra_chats`；消息历史和投票状态由 `@mastra/memory` + `@mastra/pg` 保存在 `recovery_assistant_mastra` schema。开发期的固定演示用户 ID 为 `demo_user`。
+
+## Documents
+
+- [项目交接与核心流程](doc/HANDOFF.md)
+- [前端迁移状态](doc/MIGRATION_PLAN.md)
+- [项目开发约定](AGENTS.md)
 
 ## Development
 

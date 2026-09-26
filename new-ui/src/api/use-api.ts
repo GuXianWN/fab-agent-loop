@@ -12,22 +12,12 @@ import type {
   UpdateChatInput,
 } from '@recovery-assistant/shared'
 import type { UIMessage } from 'ai'
-import { ApiError, http } from './http'
+import { ApiError, apiBaseUrl, http } from './http'
 
 type ChatDetail = Chat<UIMessage<ChatMessageMetadata>>
 
-function getApiBaseUrl(): string {
-  return (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api').replace(/\/$/, '')
-}
-
 async function requestData<T>(config: AxiosRequestConfig): Promise<T> {
-  const response = await http.request<ApiResponse<T>>({
-    ...config,
-    headers: {
-      'Cache-Control': 'no-store',
-      ...config.headers,
-    },
-  })
+  const response = await http.request<ApiResponse<T>>(config)
   const payload = response.data
 
   if (!payload || typeof payload.code !== 'number') {
@@ -42,10 +32,8 @@ async function requestData<T>(config: AxiosRequestConfig): Promise<T> {
 }
 
 export function useApi() {
-  const baseUrl = getApiBaseUrl()
-
   return {
-    chatStreamUrl: `${baseUrl}/ai/chat`,
+    chatStreamUrl: `${apiBaseUrl}/ai/chat`,
     getChatContext: (id: string) => requestData<ChatContext>({ url: `/ai/chats/${id}/context` }),
     getSession: () => requestData<Session>({ url: '/session' }),
     login: () => requestData<Session>({ url: '/session/login', method: 'POST' }),

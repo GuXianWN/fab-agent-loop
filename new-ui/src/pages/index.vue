@@ -8,7 +8,7 @@ async function createChat(prompt: string) {
   loading.value = true;
   try {
     const chat = await api.createChat({ input: prompt.trim() });
-    await router.push(`/chat/${chat.id}`);
+    await router.push({ name: '/chat/[id]', params: { id: chat.id } });
   } catch (error) {
     toast.add({ description: error instanceof Error ? error.message : 'Failed to create chat', color: 'error' });
   } finally { loading.value = false; }

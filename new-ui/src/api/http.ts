@@ -10,8 +10,10 @@ export class ApiError extends Error {
   }
 }
 
+export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api').replace(/\/$/, '')
+
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: apiBaseUrl,
   timeout: 15_000,
   headers: {
     'Cache-Control': 'no-store',

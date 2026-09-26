@@ -10,12 +10,12 @@ import ChatMessageActions from '~/components/chat/message/MessageActions.vue';
 import type { ChatContext, ChatMessageMetadata, ChatStreamRequest } from '@recovery-assistant/shared';
 import type { Chat, ChatMessage, ChatVote } from '~/types/chat';
 
-const route = useRoute();
+const route = useRoute('/chat/[id]');
 const api = useApi();
 const chatsStore = useChatsStore();
 const toast = useToast();
 
-const chatId = computed(() => String((route.params as Record<string, string>).id));
+const chatId = computed(() => route.params.id);
 const chat = ref<Chat | null>(null);
 const votes = ref<ChatVote[]>([]);
 const context = ref<ChatContext | null>(null);
