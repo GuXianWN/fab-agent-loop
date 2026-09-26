@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { toAISdkStream } from '@mastra/ai-sdk';
 import {
   convertToModelMessages,
@@ -9,38 +9,42 @@ import {
 import { randomUUID } from 'node:crypto';
 import type { Response } from 'express';
 import type { ChatContext, ChatMessageMetadata } from '@recovery-assistant/shared';
-import { AiConfig } from './ai.config';
-import { ChatsService } from '../chats/chats.service';
+import { AgentMessagesService } from '../ai/agent-messages.service';
+import { modelConfig } from '../ai/model.config';
+import { ChatMessagesService } from './chat-messages.service';
+import { ChatsService } from './chats.service';
 import { ChatTitleService } from './chat-title.service';
-import { RecoveryAgent } from './recovery.agent';
 
 @Injectable()
 export class ChatStreamService {
   private readonly logger = new Logger(ChatStreamService.name);
 
   constructor(
-    private readonly config: AiConfig,
-    private readonly agent: RecoveryAgent,
+    private readonly agentMessages: AgentMessagesService,
     private readonly chatsService: ChatsService,
+    private readonly messagesService: ChatMessagesService,
     private readonly chatTitleService: ChatTitleService,
   ) {}
 
   async getContext(chatId: string): Promise<ChatContext> {
-    const modelMessages = convertToModelMessages(await this.chatsService.getMessages(chatId));
+    const modelMessages = await convertToModelMessages(await this.messagesService.getMessages(chatId));
 
     return {
-      contextWindow: this.config.contextWindow,
+      contextWindow: modelConfig.contextWindow,
       estimatedTokens: Math.max(0, Math.round(JSON.stringify(modelMessages).length / 4)),
     };
   }
 
-  async streamChat(chatId: string, messages: UIMessage<ChatMessageMetadata>[], response: Response): Promise<void> {
-    // 只持久化本次新增的最后一条用户消息。
-    await this.chatsService.saveLatestUserMessage(chatId, messages);
-    // 模型上下文始终从数据库历史恢复，不直接信任客户端传来的完整消息列表。
-    const history = await this.chatsService.getMessages(chatId);
-    const titlePromise = this.chatTitleService.generate(chatId, history);
-    const agentStream = await this.agent.stream(history);
+  async streamChat(chatId: string, message: UIMessage<ChatMessageMetadata>, response: Response): Promise<void> {
+    if (message.role !== 'user') throw new BadRequestException('message must be from the user');
+
+    const chat = await this.chatsService.ensureOwned(chatId);
+    const titlePromise = this.chatTitleService.generate(chatId, chat.title, message);
+    const abortController = new AbortController();
+    response.once('close', () => {
+      if (!response.writableEnded) abortController.abort();
+    });
+    const agentStream = await this.agentMessages.stream(chatId, chat.userId, message, abortController.signal);
     const mastraStream = toAISdkStream(agentStream, {
       from: 'agent',
       version: 'v7',
@@ -49,7 +53,7 @@ export class ChatStreamService {
         if (part.type !== 'finish') return undefined;
 
         return {
-          contextWindow: this.config.contextWindow,
+          contextWindow: modelConfig.contextWindow,
           usage: {
             inputTokens: part.totalUsage.inputTokens ?? 0,
             outputTokens: part.totalUsage.outputTokens ?? 0,
@@ -61,14 +65,13 @@ export class ChatStreamService {
       onError: (error) => this.handleError(error),
     });
     const stream = createUIMessageStream<UIMessage>({
-      originalMessages: messages,
+      originalMessages: [message],
       generateId: randomUUID,
       execute: ({ writer }) => writer.merge(mastraStream),
       onError: (error) => this.handleError(error),
       onEnd: async ({ responseMessage, isAborted }) => {
-        // 仅在流正常完成时持久化完整的助手消息。
         if (!isAborted && responseMessage.parts.length) {
-          await this.chatsService.saveAssistantMessage(chatId, responseMessage);
+          await this.chatsService.touch(chatId);
           await this.chatTitleService.save(chatId, await titlePromise);
         }
       },

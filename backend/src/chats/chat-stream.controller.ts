@@ -18,12 +18,12 @@ export class ChatStreamController {
 
   @Post('chat')
   async chat(@Body() body: ChatStreamRequestDto, @Res() response: Response): Promise<void> {
-    const validation = await safeValidateUIMessages<UIMessage<ChatMessageMetadata>>({ messages: body.messages });
+    const validation = await safeValidateUIMessages<UIMessage<ChatMessageMetadata>>({ messages: [body.message] });
 
     if (!validation.success) {
-      throw new BadRequestException('messages must be valid AI SDK UI messages');
+      throw new BadRequestException('message must be a valid AI SDK UI message');
     }
 
-    await this.chatStreamService.streamChat(body.chatId, validation.data, response);
+    await this.chatStreamService.streamChat(body.chatId, validation.data[0]!, response);
   }
 }

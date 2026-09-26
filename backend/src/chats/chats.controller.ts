@@ -1,11 +1,15 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { R } from '../common/r';
 import { CreateChatDto, SetMessageVoteDto, UpdateChatDto } from './dto/chat.dto';
+import { ChatMessagesService } from './chat-messages.service';
 import { ChatsService } from './chats.service';
 
 @Controller('chats')
 export class ChatsController {
-  constructor(private readonly chatsService: ChatsService) {}
+  constructor(
+    private readonly chatsService: ChatsService,
+    private readonly messagesService: ChatMessagesService,
+  ) {}
 
   @Get()
   async list() {
@@ -19,7 +23,7 @@ export class ChatsController {
 
   @Get(':id/votes')
   async listVotes(@Param('id') chatId: string) {
-    return R.success().data(await this.chatsService.listVotes(chatId));
+    return R.success().data(await this.messagesService.listVotes(chatId));
   }
 
   @Post(':id/messages/:messageId/vote')
@@ -28,13 +32,13 @@ export class ChatsController {
     @Param('messageId') messageId: string,
     @Body() body: SetMessageVoteDto,
   ) {
-    await this.chatsService.setVote(chatId, messageId, body.isUpvoted);
+    await this.messagesService.setVote(chatId, messageId, body.isUpvoted);
     return R.success().data(null);
   }
 
   @Post(':id/messages/:messageId/delete')
   async removeMessage(@Param('id') id: string, @Param('messageId') messageId: string) {
-    await this.chatsService.removeMessage(id, messageId);
+    await this.messagesService.removeMessage(id, messageId);
     return R.success().data(null);
   }
 

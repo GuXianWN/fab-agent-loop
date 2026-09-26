@@ -30,7 +30,12 @@ const { messages, status, error, sendMessage, regenerate, stop } = useChat<ChatM
   generateId: () => crypto.randomUUID(),
   transport: new DefaultChatTransport({
     api: api.chatStreamUrl,
-    prepareSendMessagesRequest: ({ messages }) => ({ body: { chatId: chatId.value, messages } satisfies ChatStreamRequest<UIMessage<ChatMessageMetadata>> }),
+    prepareSendMessagesRequest: ({ messages }) => {
+      const message = messages.at(-1);
+      if (message?.role !== 'user') throw new Error('Expected a user message');
+
+      return { body: { chatId: chatId.value, message } satisfies ChatStreamRequest<UIMessage<ChatMessageMetadata>> };
+    },
   }),
   onError(streamError) {
     toast.add({ description: streamError.message, icon: 'i-lucide-alert-circle', color: 'error', duration: 0 });

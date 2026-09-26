@@ -29,6 +29,7 @@ declare module 'vue' {
     UChatPromptSubmit: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/ChatPromptSubmit.vue')['default']
     UChatReasoning: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/ChatReasoning.vue')['default']
     UChatShimmer: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/ChatShimmer.vue')['default']
+    UChatTool: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/ChatTool.vue')['default']
     UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
     UContainer: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/Container.vue')['default']
     UDashboardGroup: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/components/DashboardGroup.vue')['default']

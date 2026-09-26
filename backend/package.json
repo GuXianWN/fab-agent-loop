@@ -8,8 +8,6 @@
   },
   "scripts": {
     "build": "nest build",
-    "migration:run": "pnpm run build && typeorm migration:run -d dist/database/data-source.js",
-    "migration:revert": "pnpm run build && typeorm migration:revert -d dist/database/data-source.js",
     "start": "node dist/main",
     "start:dev": "nest start --watch"
   },
@@ -32,7 +30,8 @@
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^1.1.0"
+    "typeorm": "^1.1.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",

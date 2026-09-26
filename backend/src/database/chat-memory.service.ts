@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { toAISdkMessages } from '@mastra/ai-sdk/ui';
 import { convertMessages, type MessageListInput } from '@mastra/core/agent/message-list';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
@@ -9,7 +10,7 @@ import { DatabaseConfig } from './database.config';
 @Injectable()
 export class ChatMemoryService implements OnModuleInit, OnModuleDestroy {
   private readonly storage: PostgresStore;
-  private readonly memory: Memory;
+  readonly memory: Memory;
 
   constructor(config: DatabaseConfig) {
     this.storage = new PostgresStore({
@@ -48,7 +49,7 @@ export class ChatMemoryService implements OnModuleInit, OnModuleDestroy {
     });
 
     // Mastra bundles its own AI SDK types; the UI-message wire format is shared.
-    return convertMessages(messages).to('AIV6.UI') as unknown as UIMessage[];
+    return toAISdkMessages(messages, { version: 'v7' }) as unknown as UIMessage[];
   }
 
   async saveMessage(threadId: string, message: UIMessage): Promise<void> {

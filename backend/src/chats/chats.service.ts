@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { UIMessage } from 'ai';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
-import type { Chat, ChatVote, UpdateChatInput } from '@recovery-assistant/shared';
+import type { Chat, UpdateChatInput } from '@recovery-assistant/shared';
 import { getUser } from '../common/user-context';
 import { ChatMemoryService } from '../database/chat-memory.service';
 import { ChatEntity } from '../database/entities';
@@ -50,11 +50,7 @@ export class ChatsService {
   }
 
   async get(id: string): Promise<ChatResult> {
-    return this.toChat(await this.requireChat(id));
-  }
-
-  async getTitle(id: string): Promise<string | null> {
-    return (await this.requireChat(id)).title;
+    return this.toChat(await this.ensureOwned(id));
   }
 
   async saveGeneratedTitle(id: string, title: string): Promise<void> {
@@ -67,14 +63,14 @@ export class ChatsService {
   }
 
   async update(id: string, update: UpdateChatInput): Promise<ChatResult> {
-    const chat = await this.requireChat(id);
+    const chat = await this.ensureOwned(id);
     if (update.title !== undefined) chat.title = update.title;
     chat.updatedBy = getUser().id;
     return this.toChat(await this.chats.save(chat));
   }
 
   async remove(id: string): Promise<void> {
-    const chat = await this.requireChat(id);
+    const chat = await this.ensureOwned(id);
     await this.memory.deleteThread(id);
 
     chat.deletedAt = new Date();
@@ -82,66 +78,17 @@ export class ChatsService {
     chat.updatedBy = getUser().id;
     await this.chats.save(chat);
   }
-  //endregion
 
-  //region Votes
-  async listVotes(chatId: string): Promise<ChatVote[]> {
-    const messages = await this.getMessages(chatId);
-    return messages.flatMap(({ id, metadata }) => {
-      const isUpvoted = (metadata as { isUpvoted?: boolean | null } | undefined)?.isUpvoted;
-      return typeof isUpvoted === 'boolean' ? [{ chatId, messageId: id, isUpvoted }] : [];
-    });
-  }
-
-  async setVote(chatId: string, messageId: string, isUpvoted?: boolean): Promise<void> {
-    await this.requireMessage(chatId, messageId);
-    await this.memory.setVote(messageId, isUpvoted);
-  }
-  //endregion
-
-  //region Messages
-  async removeMessage(chatId: string, messageId: string): Promise<void> {
-    const messages = await this.getMessages(chatId);
-    const index = messages.findIndex(({ id }) => id === messageId);
-    if (index === -1) throw new NotFoundException('message not found');
-
-    const ids = messages.slice(index).map(({ id }) => id);
-    await this.memory.deleteMessages(ids);
-  }
-
-  async saveLatestUserMessage(chatId: string, messages: UIMessage[]): Promise<void> {
-    const message = messages.at(-1);
-    if (!message || message.role !== 'user') return;
-
-    const stored = await this.getMessages(chatId);
-    if (!stored.some(({ id }) => id === message.id)) {
-      await this.memory.saveMessage(chatId, { ...message, metadata: undefined });
-    }
-  }
-
-  async saveAssistantMessage(chatId: string, message: UIMessage): Promise<void> {
-    await this.requireChat(chatId);
-    await this.memory.saveMessage(chatId, message);
+  async touch(chatId: string): Promise<void> {
     await this.chats.update(chatId, { updatedAt: new Date(), updatedBy: getUser().id });
   }
 
-  async getMessages(chatId: string): Promise<UIMessage[]> {
-    await this.requireChat(chatId);
-    return this.memory.getMessages(chatId);
-  }
-  //endregion
-
-  private async requireChat(id: string): Promise<ChatEntity> {
+  async ensureOwned(id: string): Promise<ChatEntity> {
     const chat = await this.chats.findOne({ where: { id, userId: getUser().id } });
     if (!chat) throw new NotFoundException('chat not found');
     return chat;
   }
-
-  private async requireMessage(chatId: string, id: string): Promise<void> {
-    if (!(await this.getMessages(chatId)).some((message) => message.id === id)) {
-      throw new NotFoundException('message not found');
-    }
-  }
+  //endregion
 
   private async toChat(chat: ChatEntity): Promise<ChatResult> {
     return {

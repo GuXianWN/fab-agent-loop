@@ -45,5 +45,5 @@ export interface SetMessageVoteInput {
 
 export interface ChatStreamRequest<TMessage = unknown> {
   chatId: string;
-  messages: TMessage[];
+  message: TMessage;
 }

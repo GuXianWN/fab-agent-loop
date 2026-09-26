@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ChatsModule } from '../chats/chats.module';
-import { AiConfigModule } from './ai-config.module';
-import { ChatStreamController } from './chat-stream.controller';
-import { ChatStreamService } from './chat-stream.service';
-import { ChatTitleService } from './chat-title.service';
+import { DatabaseModule } from '../database/database.module';
+import { AgentMessagesService } from './agent-messages.service';
 import { RecoveryAgent } from './recovery.agent';
 
 @Module({
-  imports: [AiConfigModule, ChatsModule],
-  controllers: [ChatStreamController],
-  providers: [RecoveryAgent, ChatStreamService, ChatTitleService],
+  imports: [DatabaseModule],
+  providers: [RecoveryAgent, AgentMessagesService],
+  exports: [AgentMessagesService],
 })
 export class AiModule {}

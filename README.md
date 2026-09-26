@@ -18,11 +18,10 @@
 
 ## Development
 
-后端需要 `backend/.env` 中的 DeepSeek 与 PostgreSQL 配置；不要提交该文件。
+后端需要 `backend/.env` 中的 DeepSeek 与 PostgreSQL 配置；不要提交该文件。开发环境启动时由 TypeORM 同步 `ra_chats` 表，Mastra 初始化自己的存储表。
 
 ```powershell
 cd backend
-pnpm migration:run
 pnpm start:dev
 ```
 

@@ -1,48 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { Agent } from '@mastra/core/agent';
-import type { MessageListInput } from '@mastra/core/agent/message-list';
-import type { UIMessage } from 'ai';
-import { AiConfig, CHAT_TITLE_PROMPT } from './ai.config';
+import { ChatMemoryService } from '../database/chat-memory.service';
+import { modelConfig } from './model.config';
+import { getCurrentTimeTool } from './tools/get-current-time.tool';
 
 @Injectable()
 export class RecoveryAgent {
-  private readonly agent: Agent;
+  readonly instance: Agent;
 
-  constructor(config: AiConfig) {
+  constructor(memory: ChatMemoryService) {
     const deepSeek = createDeepSeek({
-      apiKey: config.apiKey,
-      baseURL: config.baseURL,
+      apiKey: modelConfig.apiKey,
+      baseURL: modelConfig.baseURL,
     });
 
-    this.agent = new Agent({
-      id: 'recovery-assistant',
-      name: 'Recovery Assistant',
-      instructions: 'Answer the user clearly and accurately.',
-      model: deepSeek(config.model),
+    this.instance = new Agent({
+      id: modelConfig.agent.id,
+      name: modelConfig.agent.name,
+      instructions: modelConfig.agent.instructions,
+      model: deepSeek(modelConfig.model),
+      memory: memory.memory,
+      tools: { getCurrentTime: getCurrentTimeTool },
     });
-  }
-
-  stream(messages: UIMessage[]) {
-    return this.agent.stream(this.toMastraMessages(messages), {
-      modelSettings: { reasoning: 'high' },
-    });
-  }
-
-  async generateTitle(message: UIMessage): Promise<string | null> {
-    const { text } = await this.agent.generate(this.toMastraMessages([message]), {
-      instructions: CHAT_TITLE_PROMPT,
-      modelSettings: {
-        maxOutputTokens: 80,
-        reasoning: 'none',
-      },
-    });
-
-    return text.trim().slice(0, 30) || null;
-  }
-
-  private toMastraMessages(messages: UIMessage[]): MessageListInput {
-    // Mastra 1.67 bundles its own AI SDK v7 types; the wire shapes are identical.
-    return messages as unknown as MessageListInput;
   }
 }

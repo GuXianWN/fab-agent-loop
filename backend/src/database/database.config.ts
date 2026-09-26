@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import type { DataSourceOptions } from 'typeorm';
 import { databaseEntities } from './entities';
 
 @Injectable()
@@ -11,7 +10,7 @@ export class DatabaseConfig {
   readonly password = process.env.POSTGRES_PASSWORD!;
   readonly database = process.env.POSTGRES_DATABASE!;
 
-  readonly dataSourceOptions: DataSourceOptions = {
+  readonly options: TypeOrmModuleOptions = {
     type: 'postgres',
     host: this.host,
     port: this.port,
@@ -19,13 +18,8 @@ export class DatabaseConfig {
     password: this.password,
     database: this.database,
     entities: databaseEntities,
-  };
-
-  readonly options: TypeOrmModuleOptions = {
-    ...this.dataSourceOptions,
-    autoLoadEntities: true,
     logging: ['query', 'error'],
-    synchronize: false,
+    synchronize: true,
     retryAttempts: 1,
   };
 }
