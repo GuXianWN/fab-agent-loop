@@ -48,7 +48,7 @@ export class ChatStreamService {
     const mastraStream = toAISdkStream(agentStream, {
       from: 'agent',
       version: 'v7',
-      sendReasoning: true,
+      sendReasoning: false,
       messageMetadata: ({ part }) => {
         if (part.type !== 'finish') return undefined;
 

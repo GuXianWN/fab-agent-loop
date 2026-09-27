@@ -38,6 +38,7 @@ declare global {
   const defineComponent: typeof import('vue').defineComponent
   const defineLocale: typeof import('../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/composables/defineLocale').defineLocale
   const defineShortcuts: typeof import('../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts').defineShortcuts
+  const demoTasks: typeof import('../../src/stores/tuning').demoTasks
   const eagerComputed: typeof import('@vueuse/core').eagerComputed
   const effectScope: typeof import('vue').effectScope
   const extendLocale: typeof import('../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/composables/defineLocale').extendLocale
@@ -290,6 +291,7 @@ declare global {
   const useToggle: typeof import('@vueuse/core').useToggle
   const useTour: typeof import('../../node_modules/.pnpm/@nuxt+ui@4.10.0_1da80520b25c74306c4893290b5b24c2/node_modules/@nuxt/ui/dist/runtime/composables/useTour').useTour
   const useTransition: typeof import('@vueuse/core').useTransition
+  const useTuningStore: typeof import('../../src/stores/tuning').useTuningStore
   const useUrlSearchParams: typeof import('@vueuse/core').useUrlSearchParams
   const useUserMedia: typeof import('@vueuse/core').useUserMedia
   const useVModel: typeof import('@vueuse/core').useVModel
@@ -329,4 +331,7 @@ declare global {
   // @ts-ignore
   export type { ApiError } from '../../src/api/http'
   import('../../src/api/http')
+  // @ts-ignore
+  export type { TaskStatus, TuningTask } from '../../src/stores/tuning'
+  import('../../src/stores/tuning')
 }

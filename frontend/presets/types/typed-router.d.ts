@@ -37,11 +37,25 @@ declare module 'vue-router/auto-routes' {
       { notFound: ParamValue<false> },
       | never
     >,
+    '/analysis-demo': RouteRecordInfo<
+      '/analysis-demo',
+      '/analysis-demo',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/chat/[id]': RouteRecordInfo<
       '/chat/[id]',
       '/chat/:id',
       { id: ParamValue<true> },
       { id: ParamValue<false> },
+      | never
+    >,
+    '/tasks/': RouteRecordInfo<
+      '/tasks/',
+      '/tasks',
+      Record<never, never>,
+      Record<never, never>,
       | never
     >,
   }
@@ -69,9 +83,21 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
+    'src/pages/analysis-demo.vue': {
+      routes:
+        | '/analysis-demo'
+      views:
+        | never
+    }
     'src/pages/chat/[id].vue': {
       routes:
         | '/chat/[id]'
+      views:
+        | never
+    }
+    'src/pages/tasks/index.vue': {
+      routes:
+        | '/tasks/'
       views:
         | never
     }
